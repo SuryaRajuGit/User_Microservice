@@ -72,7 +72,7 @@ namespace User_Microservice.Repository
         {
             _userContext.Card.Add(card);
             _userContext.SaveChanges();
-            return 
+            return card.Id;
         }
     }
 }

@@ -1,23 +1,32 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net.Http;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using User_Microservice.Contracts;
 using User_Microservice.Entity.Dto;
 
 namespace User_Microservice.Controllers
 {
-    public class UserController : Controller
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    public class UserController : ControllerBase
     {
         private readonly IUserServices _userService;
+        
 
         public UserController(IUserServices userService)
         {
             _userService = userService;
+            
         }
 
         [HttpPost]
+        [AllowAnonymous]
         [Route("api/login/ocelot")]
         public IActionResult VerifyUser([FromBody]LoginDTO loginDTO)
         {
@@ -78,14 +87,38 @@ namespace User_Microservice.Controllers
                 ErrorDTO badRequest = _userService.ModelStateInvalid(ModelState);
                 return BadRequest(badRequest);
             }
+            Guid Id = Guid.Parse(this.User.Claims.First(item => item.Type == "Id").Value);
+            cardDTO.Id = Id;
             ErrorDTO isCardExists = _userService.IsCardExists(cardDTO.CardNo);
             if(isCardExists != null)
             {
                 return StatusCode(409, isCardExists);
             }
             Guid saveCard = _userService.SaveCard(cardDTO);
-
+            return Ok(saveCard);
         }
-      
+
+        //[HttpPost]
+        //[Route("api/admin/product/ocelot")]
+        //public async Task<IActionResult> AddProduct([FromBody] ProductDTO productDTO)
+        //{
+        //    if (!ModelState.IsValid)
+        //    {
+        //        ErrorDTO badRequest = _userService.ModelStateInvalid(ModelState);
+        //        return BadRequest(badRequest);
+        //    }
+        //    ErrorDTO isProductExists =await _userService.IsProductExists(productDTO);
+
+            
+        //    //var client = new HttpClient();
+        //    //var r = client.GetAsync("http://localhost:5002/api/admin/product/ocelot");
+        //    //var response = r.Result.ToString();
+
+
+           
+        //    return Ok(response);
+        //}
+
+
     }
 }

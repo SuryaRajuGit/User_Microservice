@@ -8,6 +8,8 @@ namespace User_Microservice.Entity.Dto
 {
     public class CardDTO
     {
+        public Guid Id { get; set; }
+
         [Required]
         public string CardHolderName { get; set; }
 

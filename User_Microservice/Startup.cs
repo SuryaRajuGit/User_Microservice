@@ -39,7 +39,8 @@ namespace User_Microservice
             services.AddAutoMapper(typeof(Startup));
             services.AddTransient<IUserServices, UserServices>();
             services.AddTransient<IUserRepository, UserRepository>();
-            
+            services.AddHttpClient("product", config =>
+                 config.BaseAddress = new System.Uri("http://localhost:5000"));
             services.AddAuthentication(option =>
             {
                 option.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -57,6 +58,7 @@ namespace User_Microservice
                         ValidateIssuer = false,
                         ValidateAudience = false,
                         RoleClaimType = "role-abc",
+                        NameClaimType = "hhhh"
                     };
                 });
             

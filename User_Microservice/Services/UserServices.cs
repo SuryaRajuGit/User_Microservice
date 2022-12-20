@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -19,12 +21,15 @@ namespace User_Microservice.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
+        private readonly IHttpClientFactory _httpClientFactory;
+
         byte[] key = new byte[8] { 1, 2, 3, 4, 5, 6, 7, 8 };
         byte[] iv = new byte[8] { 1, 2, 3, 4, 5, 6, 7, 8 };
-        public UserServices(IUserRepository userRepository,IMapper _mapper)
+        public UserServices(IUserRepository userRepository,IMapper _mapper, IHttpClientFactory httpClientFactory)
         {
             _userRepository = userRepository;
             _mapper = _mapper;
+            _httpClientFactory = httpClientFactory;
         }
 
         public ErrorDTO IsEmailExists(string emailAddress)
@@ -112,7 +117,7 @@ namespace User_Microservice.Services
             {
                 return null ;
             }
-            string role = isDetailsExists.Item2 == "ADMIN" ? "ADMIN" : "User";
+            string role = isDetailsExists.Item1 == "ADMIN" ? "Admin" : "User";
 
             JwtSecurityTokenHandler tokenhandler = new JwtSecurityTokenHandler();
             byte[] tokenKey = Encoding.UTF8.GetBytes("thisismySecureKey12345678");
@@ -126,7 +131,7 @@ namespace User_Microservice.Services
                            new Claim("Id",userId.ToString())
                     }
                     ),
-                Expires = DateTime.UtcNow.AddMinutes(30),
+                Expires = DateTime.UtcNow.AddMinutes(90),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256Signature)
             };
 
@@ -152,10 +157,21 @@ namespace User_Microservice.Services
 
         public Guid SaveCard(CardDTO cardDTO)
         {
-            //   Card card = _mapper.Map<Card>(cardDTO);
-            Card card;
-
+            Card card = new Card();
+            card.Id = Guid.NewGuid();
+            card.CardHolderName = cardDTO.CardHolderName;
+            card.CardNo = cardDTO.CardNo;
+            card.UserId = cardDTO.Id;
             return  _userRepository.SaveCard(card);
         }
+        
+        //public async Task<ErrorDTO> IsProductExists(ProductDTO productDTO)
+        //{
+        //    //using var client = _httpClientFactory.CreateClient("product");
+        //    //HttpContent content = new StringContent(JsonConvert.SerializeObject(productDTO));
+        //    //var response = await client.PostAsync("api/product/ocelot", content);
+        //    //var data = await response.Content.
+
+        //}
     }
 }

@@ -11,11 +11,11 @@ namespace User_Microservice.Contracts
     {
         public ErrorDTO IsEmailExists(string emailAddress);
 
-        public ErrorDTO ModelStateInvalid(ModelStateDictionary ModelState);
+        public ErrorDTO ModelStateInvalid(ModelStateDictionary modelState);
 
         public ErrorDTO IsPhoneExists(string phoneNumber);
 
-        public ErrorDTO IsAddressExists(AddressDTO Address);
+        public ErrorDTO IsAddressExists(AddressDTO address);
 
         public Guid SaveUser(UserDTO userDTO);
 
@@ -24,6 +24,8 @@ namespace User_Microservice.Contracts
         public ErrorDTO IsCardExists(string cardNo);
 
         public Guid SaveCard(CardDTO cardDTO);
+
+    //    public Task<ErrorDTO> IsProductExists(ProductDTO productDTO);
 
     }
 }
