@@ -12,11 +12,15 @@ namespace User_Microservice.Helpers
     {
         public Mappers()
         {
-            CreateMap<User, UserDTO>().ReverseMap().ForMember(term => term.UserSecret, src => src.MapFrom(src => new UserSecret { Password = src.Password, Id = Guid.NewGuid(),
-                UserId = src.Id
-            }));
+            CreateMap<Phone, PhoneDTO>().ReverseMap();
+            CreateMap<Address, AddressDTO>().ReverseMap();
+            CreateMap<UserSecret, UserSecretDTO>().ReverseMap();
+            CreateMap<User, UserDTO>().ForMember(src => src.Password, term => term.MapFrom(ter =>
+                new UserSecret() { Id = Guid.NewGuid(), UserId = ter.Id, Password = ter.UserSecret.Password }
+             ));
+            CreateMap<UserDTO, User>();
 
-            CreateMap<Card, CardDTO>().ReverseMap();
+            CreateMap<Payment, CardDTO>().ReverseMap();
         }
     }
 }

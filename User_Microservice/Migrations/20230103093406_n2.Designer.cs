@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using User_Microservice.Entity.Models;
 
 namespace User_Microservice.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20230103093406_n2")]
+    partial class n2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -59,14 +61,14 @@ namespace User_Microservice.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("50bcfd1c-72d9-4050-8b1a-ce8d3180088a"),
-                            City = "Admin",
-                            Country = "Admin",
-                            Line1 = "Admin",
-                            Line2 = "Admin",
-                            StateName = "Admin",
+                            Id = new Guid("8fe5f668-ea29-4a2e-bd9e-063e7a6f0b0f"),
+                            City = "vizag",
+                            Country = "India",
+                            Line1 = "s-street",
+                            Line2 = "ss-street",
+                            StateName = "Andhra",
                             Type = "ADMIN",
-                            UserId = new Guid("f09cdf79-e08f-4ffd-8998-875f9a07ac63"),
+                            UserId = new Guid("334f3d2d-4465-4e2f-9e0d-fb4fa0e11d78"),
                             Zipcode = "531116"
                         });
                 });
@@ -77,13 +79,13 @@ namespace User_Microservice.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("CardHolderName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("CardNo")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ExpiryDate")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("UserId")
@@ -91,7 +93,8 @@ namespace User_Microservice.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("Payment");
                 });
@@ -121,10 +124,10 @@ namespace User_Microservice.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("803d3a94-7116-454a-a860-f8fd4fee3e0c"),
+                            Id = new Guid("3f643b63-f3ed-4276-9acb-911d2c76ad77"),
                             PhoneNumber = "8142255769",
                             Type = "ADMIN",
-                            UserId = new Guid("f09cdf79-e08f-4ffd-8998-875f9a07ac63")
+                            UserId = new Guid("334f3d2d-4465-4e2f-9e0d-fb4fa0e11d78")
                         });
                 });
 
@@ -153,10 +156,10 @@ namespace User_Microservice.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("f09cdf79-e08f-4ffd-8998-875f9a07ac63"),
-                            EmailAddress = "admin@gmail.com",
-                            FirstName = "Admin",
-                            LastName = "Admin",
+                            Id = new Guid("334f3d2d-4465-4e2f-9e0d-fb4fa0e11d78"),
+                            EmailAddress = "surya@gamil.com",
+                            FirstName = "Surya",
+                            LastName = "Raju",
                             Role = "ADMIN"
                         });
                 });
@@ -183,9 +186,9 @@ namespace User_Microservice.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("ab7d7102-74aa-48fe-a963-76212878b19c"),
-                            Password = "EgF0XPOUFuQ96ZhmM+Bbw8c2bESZuzw0",
-                            UserId = new Guid("f09cdf79-e08f-4ffd-8998-875f9a07ac63")
+                            Id = new Guid("8e35aff6-371c-41c6-86e1-358c7fa404ab"),
+                            Password = "7CtkAg/X1ImgPy1BBb61+XUzs6b3iWzI",
+                            UserId = new Guid("334f3d2d-4465-4e2f-9e0d-fb4fa0e11d78")
                         });
                 });
 
@@ -201,8 +204,8 @@ namespace User_Microservice.Migrations
             modelBuilder.Entity("User_Microservice.Entity.Models.Payment", b =>
                 {
                     b.HasOne("User_Microservice.Entity.Models.User", "User")
-                        .WithMany("Payment")
-                        .HasForeignKey("UserId")
+                        .WithOne("Payment")
+                        .HasForeignKey("User_Microservice.Entity.Models.Payment", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

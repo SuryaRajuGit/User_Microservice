@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using User_Microservice.Entity.Models;
 
 namespace User_Microservice.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20230103100055_n3")]
+    partial class n3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -59,14 +61,14 @@ namespace User_Microservice.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("50bcfd1c-72d9-4050-8b1a-ce8d3180088a"),
-                            City = "Admin",
-                            Country = "Admin",
-                            Line1 = "Admin",
-                            Line2 = "Admin",
-                            StateName = "Admin",
+                            Id = new Guid("1a2a103d-17e3-46e4-b38a-0bcbd9064bba"),
+                            City = "vizag",
+                            Country = "India",
+                            Line1 = "s-street",
+                            Line2 = "ss-street",
+                            StateName = "Andhra",
                             Type = "ADMIN",
-                            UserId = new Guid("f09cdf79-e08f-4ffd-8998-875f9a07ac63"),
+                            UserId = new Guid("fdce4d6a-226b-474c-976f-87f63084d791"),
                             Zipcode = "531116"
                         });
                 });
@@ -91,7 +93,8 @@ namespace User_Microservice.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("Payment");
                 });
@@ -121,10 +124,10 @@ namespace User_Microservice.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("803d3a94-7116-454a-a860-f8fd4fee3e0c"),
+                            Id = new Guid("f794c6cb-eb2e-4bfa-862b-0b0291a0b905"),
                             PhoneNumber = "8142255769",
                             Type = "ADMIN",
-                            UserId = new Guid("f09cdf79-e08f-4ffd-8998-875f9a07ac63")
+                            UserId = new Guid("fdce4d6a-226b-474c-976f-87f63084d791")
                         });
                 });
 
@@ -153,10 +156,10 @@ namespace User_Microservice.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("f09cdf79-e08f-4ffd-8998-875f9a07ac63"),
-                            EmailAddress = "admin@gmail.com",
-                            FirstName = "Admin",
-                            LastName = "Admin",
+                            Id = new Guid("fdce4d6a-226b-474c-976f-87f63084d791"),
+                            EmailAddress = "surya@gamil.com",
+                            FirstName = "Surya",
+                            LastName = "Raju",
                             Role = "ADMIN"
                         });
                 });
@@ -183,9 +186,9 @@ namespace User_Microservice.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("ab7d7102-74aa-48fe-a963-76212878b19c"),
-                            Password = "EgF0XPOUFuQ96ZhmM+Bbw8c2bESZuzw0",
-                            UserId = new Guid("f09cdf79-e08f-4ffd-8998-875f9a07ac63")
+                            Id = new Guid("47b15044-a2a2-4981-a472-734b45a91300"),
+                            Password = "7CtkAg/X1ImgPy1BBb61+XUzs6b3iWzI",
+                            UserId = new Guid("fdce4d6a-226b-474c-976f-87f63084d791")
                         });
                 });
 
@@ -201,8 +204,8 @@ namespace User_Microservice.Migrations
             modelBuilder.Entity("User_Microservice.Entity.Models.Payment", b =>
                 {
                     b.HasOne("User_Microservice.Entity.Models.User", "User")
-                        .WithMany("Payment")
-                        .HasForeignKey("UserId")
+                        .WithOne("Payment")
+                        .HasForeignKey("User_Microservice.Entity.Models.Payment", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

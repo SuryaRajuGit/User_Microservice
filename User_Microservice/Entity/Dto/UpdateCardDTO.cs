@@ -8,9 +8,14 @@ using System.Threading.Tasks;
 
 namespace User_Microservice.Entity.Dto
 {
-    public class CardDTO
+    public class UpdateCardDTO
     {
+        [JsonProperty(PropertyName = "id")]
         public Guid Id { get; set; }
+
+        [Required]
+        [JsonProperty(PropertyName = "user_id")]
+        public Guid UserId { get; set; }
 
         [Required]
         [JsonProperty(PropertyName = "name")]
@@ -20,7 +25,7 @@ namespace User_Microservice.Entity.Dto
         [JsonProperty(PropertyName = "card_no")]
         public string CardNo { get; set; }
 
-
+        [Required]
         [JsonProperty(PropertyName = "expiry_date")]
         public string ExpiryDate { get; set; }
     }

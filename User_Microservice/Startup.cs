@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using AutoMapper;
+using User_Microservice.Controllers;
 
 namespace User_Microservice
 {
@@ -39,8 +40,15 @@ namespace User_Microservice
             services.AddAutoMapper(typeof(Startup));
             services.AddTransient<IUserServices, UserServices>();
             services.AddTransient<IUserRepository, UserRepository>();
-            services.AddHttpClient("product", config =>
+            services.AddHttpClient("cart", config =>
                  config.BaseAddress = new System.Uri("http://localhost:5000"));
+            var serviceProvider = services.BuildServiceProvider();
+            var logger = serviceProvider.GetService<ILogger<UserController>>();
+            services.AddControllersWithViews()
+            .AddNewtonsoftJson(options =>
+            options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+            );
+            services.AddSingleton(typeof(ILogger), logger);
             services.AddAuthentication(option =>
             {
                 option.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

@@ -1,15 +1,19 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace User_Microservice.Entity.Dto
 {
-    public class UserDTO
+    public class UpdateUserDTO
     {
+        [Required]
+        public Guid Id { get; set; }
 
         [Required]
-        [JsonProperty(PropertyName ="password")]
+        [JsonProperty(PropertyName = "password")]
         [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,15}$",
             ErrorMessage = "Passwords must be at least 8 characters, one upper case (A-Z)," +
             "one lower case (a-z),a number (0-9) and special character (e.g. !@#$%^&*)")]
@@ -19,7 +23,6 @@ namespace User_Microservice.Entity.Dto
         [JsonProperty(PropertyName = "first_name")]
         public string FirstName { get; set; }
 
-        [Required]
         [JsonProperty(PropertyName = "last_name")]
         public string LastName { get; set; }
 
@@ -32,13 +35,10 @@ namespace User_Microservice.Entity.Dto
         [JsonProperty(PropertyName = "phone")]
         public PhoneDTO Phone { get; set; }
 
-
         [Required]
         [JsonProperty(PropertyName = "address")]
         public AddressDTO Address { get; set; }
 
-        //[JsonProperty(PropertyName = "user_secret")]
-        //public UserSecretDTO UserSecret { get; set; }
 
     }
 }

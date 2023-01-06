@@ -5,27 +5,34 @@ using System.Threading.Tasks;
 
 namespace User_Microservice.Entity.Models
 {
-    public class Phone
+    public class Payment
     {
         ///<summary>
-        /// Phone id
+        /// Card id
         ///</summary>
         public Guid Id { get; set; }
 
         ///<summary>
-        /// Foregin key user id
+        /// Forgein key User id
         ///</summary>
         public Guid UserId { get; set; }
-        public User User { get; set; }
+        public User User  { get; set; }
 
         ///<summary>
-        /// Phone number of the user 
+        /// Name of the user on the card
         ///</summary>
-        public string PhoneNumber { get; set; }
+        public string Name { get; set; }
 
         ///<summary>
-        /// User phone number type
+        /// Card Number
         ///</summary>
-        public string Type { get; set; }
+        public string CardNo { get; set; }
+
+        ///<summary>
+        /// Cart Expiry date.
+        ///</summary>
+        public string ExpiryDate { get; set; }
+
+        
     }
 }

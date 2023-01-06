@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using User_Microservice.Entity.Models;
 
 namespace User_Microservice.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20230103105315_n5")]
+    partial class n5
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -59,14 +61,14 @@ namespace User_Microservice.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("50bcfd1c-72d9-4050-8b1a-ce8d3180088a"),
-                            City = "Admin",
-                            Country = "Admin",
-                            Line1 = "Admin",
-                            Line2 = "Admin",
-                            StateName = "Admin",
+                            Id = new Guid("6ba5e478-267b-4291-b947-d8e1fddee4af"),
+                            City = "vizag",
+                            Country = "India",
+                            Line1 = "s-street",
+                            Line2 = "ss-street",
+                            StateName = "Andhra",
                             Type = "ADMIN",
-                            UserId = new Guid("f09cdf79-e08f-4ffd-8998-875f9a07ac63"),
+                            UserId = new Guid("19d869b4-d3c2-4158-9b21-ff3acb5777d6"),
                             Zipcode = "531116"
                         });
                 });
@@ -121,10 +123,10 @@ namespace User_Microservice.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("803d3a94-7116-454a-a860-f8fd4fee3e0c"),
+                            Id = new Guid("22916f99-599c-4418-aae6-ad9edf978147"),
                             PhoneNumber = "8142255769",
                             Type = "ADMIN",
-                            UserId = new Guid("f09cdf79-e08f-4ffd-8998-875f9a07ac63")
+                            UserId = new Guid("19d869b4-d3c2-4158-9b21-ff3acb5777d6")
                         });
                 });
 
@@ -153,10 +155,10 @@ namespace User_Microservice.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("f09cdf79-e08f-4ffd-8998-875f9a07ac63"),
-                            EmailAddress = "admin@gmail.com",
-                            FirstName = "Admin",
-                            LastName = "Admin",
+                            Id = new Guid("19d869b4-d3c2-4158-9b21-ff3acb5777d6"),
+                            EmailAddress = "surya@gamil.com",
+                            FirstName = "Surya",
+                            LastName = "Raju",
                             Role = "ADMIN"
                         });
                 });
@@ -183,9 +185,9 @@ namespace User_Microservice.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("ab7d7102-74aa-48fe-a963-76212878b19c"),
-                            Password = "EgF0XPOUFuQ96ZhmM+Bbw8c2bESZuzw0",
-                            UserId = new Guid("f09cdf79-e08f-4ffd-8998-875f9a07ac63")
+                            Id = new Guid("85938cc9-c249-456f-9bfd-31351c74dd65"),
+                            Password = "7CtkAg/X1ImgPy1BBb61+XUzs6b3iWzI",
+                            UserId = new Guid("19d869b4-d3c2-4158-9b21-ff3acb5777d6")
                         });
                 });
 

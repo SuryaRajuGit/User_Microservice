@@ -16,7 +16,7 @@ namespace User_Microservice.Entity.Models
 
         public DbSet<Address> Address { get; set; }
 
-        public DbSet<Card> Card { get; set; }
+        public DbSet<Payment> Payment { get; set; }
 
         public DbSet<Phone> Phone { get; set; }
 
