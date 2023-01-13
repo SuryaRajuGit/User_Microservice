@@ -25,7 +25,7 @@ namespace User_Microservice.Repository
         ///<return>bool</return>
         public bool IsEmailExists(string email)
         {
-            return   _userContext.User.Any(term => term.EmailAddress == email);
+            return _userContext.User.Any(term => term.EmailAddress == email);
         }
 
         ///<summary>
@@ -125,7 +125,7 @@ namespace User_Microservice.Repository
         ///<return>bool</return>
         public bool IsUpdateUserEmailExists(string emailAddress,Guid userId)
         {
-            foreach (var item in _userContext.User.Where(user => user.Id != userId))
+            foreach (User item in _userContext.User.Where(user => user.Id != userId))
             {
                 if(item.EmailAddress == emailAddress)
                 {
@@ -141,7 +141,7 @@ namespace User_Microservice.Repository
         ///<return>bool</return>
         public bool IsUpdateUserPhoneExists(string phoneNumber, Guid userId)
         {
-            foreach (var item in _userContext.User.Include(term => term.Phone).Where(user => user.Id != userId))
+            foreach (User item in _userContext.User.Include(term => term.Phone).Where(user => user.Id != userId))
             {
                 if (item.Phone.PhoneNumber == phoneNumber)
                 {
@@ -212,7 +212,7 @@ namespace User_Microservice.Repository
         ///<return>bool</return>
         public bool DeleteUser(Guid id)
         {
-            var u = _userContext.User.ToList();
+            List<User> userList = _userContext.User.ToList();
             bool isUserExist = _userContext.User.Any(find => find.Id == id);
             if(isUserExist)
             {
@@ -225,21 +225,33 @@ namespace User_Microservice.Repository
             }
             return false;
         }
+        ///<summary>
+        /// Gets all the user card details
+        ///</summary>
+        ///<return>List<Payment></return>
         public List<Payment> GetCardDetails(Guid id)
         {
-            List<Payment> t = _userContext.Payment.Where(find => find.UserId == id).ToList();
-            return t;
+            List<Payment> cardList = _userContext.Payment.Where(find => find.UserId == id).ToList();
+            return cardList;
         }
+        ///<summary>
+        /// Checks is user details exist or not
+        ///</summary>
+        ///<return>bool</return>
         public bool IsUserPaymentDetailsExist(Guid cardId,Guid userId)
         {
-            var x = _userContext.User.Include(src => src.Payment).Where(find => find.Id == userId).First();
-            return x.Payment.Any(term => term.Id == cardId);
+            User user = _userContext.User.Include(src => src.Payment).Where(find => find.Id == userId).First();
+            return user.Payment.Any(term => term.Id == cardId);
         }
+        ///<summary>
+        /// Saves user card details and return bool value
+        ///</summary>
+        ///<return>bool</return>
         public bool isCardDetailsExist(Payment card)
         {
-            var x =  _userContext.Payment.Where(find => find.UserId == card.UserId && find.Id != card.Id).ToList();
-            bool t = x.Any(find => find.CardNo == card.CardNo);
-            if(!t)
+            List<Payment> cardList =  _userContext.Payment.Where(find => find.UserId == card.UserId && find.Id != card.Id).ToList();
+            bool isCardExist = cardList.Any(find => find.CardNo == card.CardNo);
+            if(!isCardExist)
             {
                 _userContext.Payment.Update(card);
                 _userContext.SaveChanges();
@@ -247,40 +259,73 @@ namespace User_Microservice.Repository
             }
             return true;
         }
-
+        ///<summary>
+        ///Gets User details 
+        ///</summary>
+        ///<return>User</return>
         public User GetUserAccount(Guid id)
         {
             return _userContext.User.Include(src => src.Phone).Include(src => src.UserSecret).Include(src => src.Address)
                 .Include(src => src.Payment).Where(find => find.Id == id).FirstOrDefault();
 
         }
+        ///<summary>
+        /// Checks Upi exist or not
+        ///</summary>
+        ///<return>bool</return>
         public bool CheckUpi(Guid id)
         {
             return _userContext.Payment.Any(find => find.Id == id);
         }
 
+        ///<summary>
+        /// Gets UPI details of the user
+        ///</summary>
+        ///<return>List<Payment></return>
         public List<Payment> GetUpiDetails(Guid userId)
         {
             return _userContext.Payment.Where(find => find.UserId == userId && find.ExpiryDate == null).ToList();
         }
+
+        ///<summary>
+        /// Saves Payment card details
+        ///</summary>
         public void SaveUpdateCard(Payment card)
         {
             _userContext.Payment.Update(card);
             _userContext.SaveChanges();
         }
+
+        ///<summary>
+        /// Checks address id exist or not
+        ///</summary>
+        ///<return>bool</return>
         public bool IsAddressIdExist(Guid addressId)
         {
             return _userContext.Address.Any(find =>find.Id ==addressId);
         }
+
+        ///<summary>
+        /// Checks Payment id exist or not
+        ///</summary>
+        ///<return>bool</return>
         public bool IsPaymentIdExist(Guid paymentId)
         {
             return _userContext.Payment.Any(find =>find.Id == paymentId);
         }
+        ///<summary>
+        /// Gets Addres of the user
+        ///</summary>
+        ///<return>Address</return>
         public Address GetAddress(Guid addressId)
         {
             return _userContext.Address.Where(find => find.Id == addressId).First();
         }
 
+        ///<summary>
+        /// Gets Payment details of the user
+        ///</summary>
+        ///<return>Payment</return>
         public Payment GetPaymentDetails(Guid paymentId)
         {
             return _userContext.Payment.Where(find => find.Id == paymentId).First();

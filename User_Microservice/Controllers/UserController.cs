@@ -14,7 +14,7 @@ using User_Microservice.Entity.Dto;
 
 namespace User_Microservice.Controllers
 {
-    [Authorize(AuthenticationSchemes = "Bearer")]
+    [Authorize(AuthenticationSchemes = Constants.Bearer)]
     public class UserController : ControllerBase
     {
         private readonly IUserServices _userService;
@@ -168,9 +168,15 @@ namespace User_Microservice.Controllers
                 return StatusCode(409, isCardExists);
             }
             Guid saveCard = _userService.SaveCard(cardDTO, id);
-            _logger.LogInformation("New paymane card added successfully");
+            _logger.LogInformation("New paymanent card added successfully");
             return StatusCode(201,saveCard);
         }
+
+        ///<summary>
+        /// Adds payement UPI to user account
+        ///</summary>
+        ///<param name="upiDTO">User details</param>
+        ///<returns>UPI id</returns>
         [HttpPost]
         [Route("api/upi")]
         public IActionResult AddUpi([FromBody]UpiDTO upiDTO)
@@ -181,19 +187,22 @@ namespace User_Microservice.Controllers
                 ErrorDTO badRequest = _userService.ModelStateInvalid(ModelState);
                 return BadRequest(badRequest);
             }
-            
-            ErrorDTO isUserExist = _userService.CheckUser(upiDTO.Id);
+            Guid id = Guid.Parse(this.User.Claims.First(item => item.Type == "Id").Value);
+            ErrorDTO isUserExist = _userService.CheckUser(id);
             if (isUserExist != null)
             {
+                _logger.LogError("User id not found");
                 return StatusCode(404, isUserExist);
             }
-            ErrorDTO isUpiExist = _userService.CheckUpi(upiDTO);
+            ErrorDTO isUpiExist = _userService.CheckUpi(upiDTO,id);
             if (isUpiExist != null)
             {
+                _logger.LogError("UPI already exist");
                 return StatusCode(409, isUpiExist);
             }
-            Guid id = _userService.SaveUpi(upiDTO);
-            return StatusCode(201,id);
+            _logger.LogError("UPI added successfully");
+            Guid response = _userService.SaveUpi(upiDTO,id);
+            return StatusCode(201, response);
         }
 
 
@@ -207,16 +216,20 @@ namespace User_Microservice.Controllers
         [Route("api/account/{id}")]
         public IActionResult GetUserDetails([FromRoute] Guid id)
         {
+            _logger.LogError("Geting user details started successfully");
             if (!ModelState.IsValid)
             {
+                _logger.LogError("Entered wrong data");
                 ErrorDTO badRequest = _userService.ModelStateInvalid(ModelState);
                 return BadRequest(badRequest);
             }
             UserDetailsResponse userDetails = _userService.GetuserDetails(id);
             if (userDetails == null)
             {
+                _logger.LogError("User not found with id");
                 return StatusCode(404, new ErrorDTO() { type = "User", description = "User with id not found" });
             }
+            _logger.LogError("User details retervied successfully");
             return Ok(userDetails);
         }
 
@@ -229,8 +242,10 @@ namespace User_Microservice.Controllers
         [Route("api/account/{id}")]
         public  ActionResult DeleteAccount([FromRoute] Guid id)
         {
+            _logger.LogError("Delete user accound started");
             if (!ModelState.IsValid)
             {
+                _logger.LogError("Entered wrong data");
                 ErrorDTO badRequest = _userService.ModelStateInvalid(ModelState);
                 return BadRequest(badRequest);
             }
@@ -239,91 +254,134 @@ namespace User_Microservice.Controllers
                 ErrorDTO isAccountDeleted =  _userService.DeleteAccount(id);
                 if (isAccountDeleted != null)
                 {
+                    _logger.LogError("User not found with id");
                     return StatusCode(404, isAccountDeleted);
                 }
             }
             catch(Exception ex)
             {
+                _logger.LogError("Order service is not available");
                 return StatusCode(404,ex.Message);
             }
-            
+            _logger.LogError("User account deleted successfully");
             return Ok("Account deleted successfully");
         }
+        ///<summary>
+        /// Gets Payment details 
+        ///</summary>
+        ///<param name="id">User id</param>
+        ///<returns>returns Payment details</returns>
         [HttpGet]
         [Route("api/payment/account/{id}")]
-        public ActionResult<PaymentDetailsResponseDTO> GetPaymentDetails([FromRoute] Guid id)
+        public IActionResult GetPaymentDetails([FromRoute] Guid id)
         {
+            _logger.LogError("Geting payment details started");
             ErrorDTO isUserExist = _userService.IsUserExist(id);
             if(isUserExist != null)
             {
+                _logger.LogError("User not found with id");
                 return StatusCode(404,isUserExist);
             }
-            PaymentDetailsResponseDTO x = _userService.GetPaymentDetails(id);
-            if (x == null)
+            PaymentDetailsResponseDTO response = _userService.GetPaymentDetails(id);
+            if (response == null)
             {
+                _logger.LogError("No payment details added ");
                 return StatusCode(204, "No Payment details added");
             }
-            return Ok(x);
+            _logger.LogError("User details retrived successfully");
+            return Ok(response);
         }
+
+        ///<summary>
+        /// Updates user card details
+        ///</summary>
+        ///<param name="cardDTO">User id</param>
         [HttpPut]
         [Route("api/card/account")]
         public IActionResult UpdateCardDetails([FromBody] UpdateCardDTO cardDTO)
         {
+            _logger.LogError("Update user card details started");
             if (!ModelState.IsValid)
             {
+                _logger.LogError("Entered wrong details");
                 ErrorDTO badRequest = _userService.ModelStateInvalid(ModelState);
                 return BadRequest(badRequest);
             }
             ErrorDTO isUserDetailsExist = _userService.IsUserDetailsExist(cardDTO);
             if (isUserDetailsExist != null)
             {
+                _logger.LogError("User not found with id");
                 return StatusCode(404, isUserDetailsExist);
             }
-            ErrorDTO x = _userService.IsCardDetailsExist(cardDTO);
-            if (x != null)
+            ErrorDTO isCardetailsExist = _userService.IsCardDetailsExist(cardDTO);
+            if (isCardetailsExist != null)
             {
-                return StatusCode(409, x);
+                _logger.LogError("Card details already added");
+                return StatusCode(409, isCardetailsExist);
             }
+            _logger.LogError("Card details updated sucessfully");
             return Ok("Card details updated sucessfully");
         }
+
+        ///<summary>
+        /// Updates user UPI details
+        ///</summary>
+        ///<param name="updateUpiDTO">User id</param>
         [HttpPut]
         [Route("api/upi")]
         public IActionResult UpdateUpiDetails([FromBody]UpdateUpiDTO updateUpiDTO)
         {
+            _logger.LogError("Update UPI details started");
             if (!ModelState.IsValid)
             {
+                _logger.LogError("Entered wrong data");
                 ErrorDTO badRequest = _userService.ModelStateInvalid(ModelState);
                 return BadRequest(badRequest);
             }
             ErrorDTO isUpiDetailsExist = _userService.IsUpiDetailsExist(updateUpiDTO);
             if (isUpiDetailsExist != null)
             {
+                _logger.LogError("User not found with id");
                 return StatusCode(404, isUpiDetailsExist);
             }
             ErrorDTO updateUpiDetails = _userService.UpdateUpiDetails(updateUpiDTO);
             if (updateUpiDetails != null)
             {
+                _logger.LogError("Upi details already exist");
                 return StatusCode(409, updateUpiDetails);
             }
+            _logger.LogError("UPI details updated successfully");
             return Ok("Upi details updated successfully");
         }
-        [HttpPost]
+
+        ///<summary>
+        /// returns product details
+        ///</summary>
+        ///<param name="checkOutDetailsDTO">User id</param>
         [HttpPost]
         [Route("api/check-out/details")]
         public string CheckOutDetails([FromBody] CheckOutCart checkOutDetailsDTO )
         {
+            _logger.LogError("Check out cart starteds");
             ErrorDTO response = _userService.IsPaymentDetailsExist(checkOutDetailsDTO);
             if(response != null)
             {
+                _logger.LogError("data returned");
                 return JsonConvert.SerializeObject(response);
             }
+            _logger.LogError("null value returned");
             return null;
         }
 
+        ///<summary>
+        /// returns product details
+        ///</summary>
+        ///<param name="checkOutDetailsDTO">User id</param>
         [HttpPost]
         [Route("api/check-out")]
         public string GetCheckOutDetails([FromBody] CheckOutCart checkOutDetailsDTO)
         {
+            _logger.LogError("Check out details returned");
             return _userService.GetCheckOutPaymentDetails(checkOutDetailsDTO);
         }
         

@@ -19,7 +19,7 @@ namespace User_Microservice.Entity.Dto
         [JsonProperty(PropertyName = "first_name")]
         public string FirstName { get; set; }
 
-        [Required]
+        
         [JsonProperty(PropertyName = "last_name")]
         public string LastName { get; set; }
 

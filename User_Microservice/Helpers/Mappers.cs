@@ -18,6 +18,11 @@ namespace User_Microservice.Helpers
             CreateMap<User, UserDTO>().ForMember(src => src.Password, term => term.MapFrom(ter =>
                 new UserSecret() { Id = Guid.NewGuid(), UserId = ter.Id, Password = ter.UserSecret.Password }
              ));
+
+            CreateMap< PhoneDTO,Phone>();
+                 CreateMap<AddressDTO, Address>();
+                CreateMap<UserSecretDTO, UserSecret>();
+            CreateMap<UserDetailsResponse, User>();
             CreateMap<UserDTO, User>();
 
             CreateMap<Payment, CardDTO>().ReverseMap();

@@ -1,5 +1,8 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using System;
@@ -20,19 +23,28 @@ namespace User_Microservice.Services
 {
     public class UserServices : IUserServices
     {
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IHttpContextAccessor _context;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
-        private readonly IHttpClientFactory _httpClientFactory;
+
 
         byte[] key = new byte[8] { 1, 2, 3, 4, 5, 6, 7, 8 };
         byte[] iv = new byte[8] { 1, 2, 3, 4, 5, 6, 7, 8 };
-        public UserServices(IUserRepository userRepository,IMapper mapper, IHttpClientFactory httpClientFactory)
+        public UserServices(IUserRepository userRepository, IMapper mapper, IHttpContextAccessor context)
         {
+            _context = context;
             _userRepository = userRepository;
             _mapper = mapper;
-            _httpClientFactory = httpClientFactory;
+            IHostBuilder hostBuilder1 = Host.CreateDefaultBuilder()
+                .ConfigureServices(Services =>
+                {
+                    Services.AddHttpClient("cart", config =>
+            config.BaseAddress = new System.Uri("http://localhost:5000"));
+                });
+            IHost host1 = hostBuilder1.Build();
+            _httpClientFactory = host1.Services.GetRequiredService<IHttpClientFactory>();
         }
-
         ///<summary>
         /// Checks whether the user email already exists.
         ///</summary>
@@ -96,15 +108,15 @@ namespace User_Microservice.Services
         public string AccessToken(string id,string role)
         {
             JwtSecurityTokenHandler tokenhandler = new JwtSecurityTokenHandler();
-            byte[] tokenKey = Encoding.UTF8.GetBytes("thisismySecureKey12345678");
+            byte[] tokenKey = Encoding.UTF8.GetBytes(Constants.Key);
 
             SecurityTokenDescriptor tokenDeprictor = new SecurityTokenDescriptor
             {
                 Subject = new System.Security.Claims.ClaimsIdentity(
                 new Claim[]
                 {
-                           new Claim("role",role),
-                           new Claim("Id",id)
+                           new Claim(Constants.Role,role),
+                           new Claim(Constants.Id,id)
                 }
                 ),
                 Expires = DateTime.UtcNow.AddMinutes(90),
@@ -122,25 +134,7 @@ namespace User_Microservice.Services
         ///<return>Guid</return>
         public async Task<Guid> SaveUser(UserDTO userDTO)
         {
-            //User user = new User();
-            //userDTO.UserSecret = new UserSecretDTO { Password = userDTO.Password };
             Guid id = Guid.NewGuid();
-            //user.Id = Id;
-            //user.FirstName = userDTO.FirstName;
-            //user.LastName = userDTO.LastName;
-            //user.Phone = new Phone { PhoneNumber = userDTO.Phone.PhoneNumber, Id = Guid.NewGuid(), UserId = Id,Type=userDTO.Phone.Type };
-            //user.EmailAddress = userDTO.EmailAddress;
-            //user.Address = new Address {
-            //    Line1= userDTO.Address.Line1,
-            //    Line2 = userDTO.Address.Line2,
-            //    Zipcode= userDTO.Address.Zipcode,
-            //    StateName=userDTO.Address.StateName,
-            //    City=userDTO.Address.City,
-            //    Country=userDTO.Address.Country,
-            //    Type=userDTO.Address.Type
-            //    };
-            
-            
             User user = _mapper.Map<User>(userDTO);
             user.Id = id;
             user.Address.Id = Guid.NewGuid();
@@ -155,26 +149,20 @@ namespace User_Microservice.Services
             string password = Convert.ToBase64String(outputBuffer);
             user.UserSecret = new UserSecret {Password = password,Id=Guid.NewGuid(),UserId=id };
 
-            using HttpClient client = _httpClientFactory.CreateClient("cart");
-            string accessToken = AccessToken(id.ToString(),"User");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            using HttpClient client = _httpClientFactory.CreateClient(Constants.URL);
+            string accessToken = AccessToken(id.ToString(),Constants.User);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Constants.User, accessToken);
 
-            var response = client.PostAsync("/api/cart/create",
+            HttpResponseMessage response = client.PostAsync("/api/cart/create",
                                   new StringContent(JsonConvert.SerializeObject(id),
-                                  Encoding.UTF8, "application/json")).Result;
+                                  Encoding.UTF8, Constants.ContentType)).Result;
             if(!response.IsSuccessStatusCode)
             {
                 throw new Exception("Order service is unavailable");
             }
             string result = await response.Content.ReadAsStringAsync();
             object data = JsonConvert.DeserializeObject(result);
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception();
-            }
-
             Guid responseId = _userRepository.SaveUser(user);
-
             return responseId;
         }
 
@@ -186,43 +174,24 @@ namespace User_Microservice.Services
         {
             Tuple<string, string> isDetailsExists = _userRepository.IsLoginDetailsExists(loginDTO);
 
-            string text = isDetailsExists.Item2;
+            string passwordEncrypt = isDetailsExists.Item2;
             SymmetricAlgorithm algorithm = DES.Create();
             ICryptoTransform transform = algorithm.CreateDecryptor(this.key, this.iv);
-            byte[] inputbuffer = Convert.FromBase64String(text);
+            byte[] inputbuffer = Convert.FromBase64String(passwordEncrypt);
             byte[] outputBuffer = transform.TransformFinalBlock(inputbuffer, 0, inputbuffer.Length);
             string password = Encoding.Unicode.GetString(outputBuffer);
-
             if (password != loginDTO.Password)
             {
                 return null ;
             }
-            string role = isDetailsExists.Item1 == "ADMIN" ? "Admin" : "User";
+            string role = isDetailsExists.Item1 == Constants.ADMIN ? Constants.Admin : Constants.User;
             Guid userId = _userRepository.GetUserId(loginDTO.EmailAddress);
-            //JwtSecurityTokenHandler tokenhandler = new JwtSecurityTokenHandler();
-            //byte[] tokenKey = Encoding.UTF8.GetBytes("thisismySecureKey12345678");
-            //Guid userId = _userRepository.GetUserId(loginDTO.EmailAddress);
-            //SecurityTokenDescriptor tokenDeprictor = new SecurityTokenDescriptor
-            //{
-            //    Subject = new System.Security.Claims.ClaimsIdentity(
-            //        new Claim[]
-            //        {
-            //               new Claim("role",role),
-            //               new Claim("Id",userId.ToString())
-            //        }
-            //        ),
-            //    Expires = DateTime.UtcNow.AddMinutes(90),
-            //    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256Signature)
-            //};
-
-            //SecurityToken token = tokenhandler.CreateToken(tokenDeprictor);
-            //string tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
             string accessToken = AccessToken(userId.ToString(),role);
             LoginResponseDTO response = new LoginResponseDTO()
             {
                 AccessToken = accessToken,
-                TokenType = "Bearer"
+                TokenType = Constants.Bearer
             };
             return response;
         }
@@ -247,12 +216,6 @@ namespace User_Microservice.Services
         ///<return>id</return>
         public Guid SaveCard(CardDTO cardDTO,Guid id)
         {
-            //Payment card = new Payment();
-            //card.Id = Guid.NewGuid();
-            //card.Name = cardDTO.Name;
-            //card.CardNo = cardDTO.CardNo;
-            //card.UserId = id;
-            //card.ExpiryDate = cardDTO.ExpiryDate;
             Payment paymentCard = _mapper.Map<Payment>(cardDTO);
             paymentCard.Id = Guid.NewGuid();
             paymentCard.UserId = id;
@@ -312,20 +275,23 @@ namespace User_Microservice.Services
             {
                 return new ErrorDTO() {type="User",description="User id not found" };
             }
-            
-
             return null;
         }
+        ///<summary>
+        /// checks user details exist 
+        ///</summary>
+        ///<return>ErrorDTO</return>
         public ErrorDTO IsUserDetailsExist(UpdateCardDTO cardDTO)
         {
-            var x = IsUserExists(cardDTO.UserId);
-            if(x != null)
+            string userId = _context.HttpContext.User.Claims.First(i => i.Type == Constants.Id).Value;
+            ErrorDTO user = IsUserExists(cardDTO.UserId);
+            if(user != null)
             {
                 return new ErrorDTO() { type = "User", description = "User id not found" };
             }
 
-            var xx = _userRepository.IsUserPaymentDetailsExist(cardDTO.Id,cardDTO.UserId);
-            if(!xx)
+            bool payment = _userRepository.IsUserPaymentDetailsExist(cardDTO.Id,cardDTO.UserId);
+            if(!payment)
             {
                 return new ErrorDTO() { type = "Card", description = $"Card with id {cardDTO.Id} not found" };
             }
@@ -342,36 +308,16 @@ namespace User_Microservice.Services
             {
                 return null;
             }
-            AddressDTO address = new AddressDTO()
-            {
-                Line1 = response.Address.Line1,
-                Line2 = response.Address.Line2,
-                StateName = response.Address.StateName,
-                City = response.Address.City,
-                Zipcode = response.Address.Zipcode,
-                Country = response.Address.Country,
-                Type = response.Address.Type
-            };
-
-            //CardDTO card = new CardDTO();
-            //card.CardNo = response.Card.CardNo;
-            //card.ExpiryDate = response.Card.ExpiryDate;
-            //card.Name = response.Card.CardHolderName;
-
-
-            PhoneDTO phoneDTO = new PhoneDTO()
-            {
-                PhoneNumber = response.Phone.PhoneNumber,
-                Type = response.Phone.Type,
-            };
+            AddressDTO addressDTO = _mapper.Map<AddressDTO>(response.Address);
+            PhoneDTO phone = _mapper.Map<PhoneDTO>(response.Phone);
+         
             UserDetailsResponse userDetailsResponse = new UserDetailsResponse()
             {
                 Id = response.Id,
                 FirstName = response.FirstName,
                 LastName = response.LastName,
-                Address = address,
-               // Card = card,
-                Phone = phoneDTO,
+                Address = addressDTO,
+                Phone = phone,
                 EmailAddress = response.EmailAddress
             };
             return userDetailsResponse;
@@ -414,11 +360,11 @@ namespace User_Microservice.Services
         public ErrorDTO DeleteAccount(Guid id)
         {
             
-            using HttpClient client = _httpClientFactory.CreateClient("cart");
-            string accessToken = AccessToken(id.ToString(), "User");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            using HttpClient client = _httpClientFactory.CreateClient(Constants.URL);
+            string accessToken = AccessToken(id.ToString(), Constants.User);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Constants.Bearer, accessToken);
 
-            var response =  client.DeleteAsync($"/api/user/{id}").Result;
+            HttpResponseMessage response =  client.DeleteAsync($"/api/user/{id}").Result;
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception("Order service is unavailable");
@@ -430,6 +376,11 @@ namespace User_Microservice.Services
             }
             return null;
         }
+
+        ///<summary>
+        /// check user details exist
+        ///</summary>
+        ///<return>ErrorDTO</return>
         public ErrorDTO IsUserDetailsAlreadyExist(UpdateUserDTO updateUserDTO)
         {
             bool isUserExist = _userRepository.IsUserExist(updateUserDTO.Id);
@@ -445,7 +396,7 @@ namespace User_Microservice.Services
             bool isUpdateUserPhoneExists = _userRepository.IsUpdateUserPhoneExists(updateUserDTO.Phone.PhoneNumber, updateUserDTO.Id);
             if (!isUpdateUserPhoneExists)
             {
-                return new ErrorDTO { type = "Pbone number", description = updateUserDTO.Phone.PhoneNumber + "Phone already exists" };
+                return new ErrorDTO { type = "Phone number", description = updateUserDTO.Phone.PhoneNumber + "Phone already exists" };
             }
             Address address = new Address()
             {
@@ -465,6 +416,10 @@ namespace User_Microservice.Services
             
             return null;
         }
+        ///<summary>
+        /// Gets user paymant details
+        ///</summary>
+        ///<return>PaymentDetailsResponseDTO</return>
         public PaymentDetailsResponseDTO GetPaymentDetails(Guid id)
         {
             PaymentDetailsResponseDTO paymentDetailsResponseDTO = new PaymentDetailsResponseDTO()
@@ -472,12 +427,12 @@ namespace User_Microservice.Services
                 Card = new List<CardDTO>(),
                 Upi=new List<UpiDTO>()
             };
-            List<Payment> x = _userRepository.GetCardDetails(id); 
-            if(x.Count() == 0)
+            List<Payment> paymentDetailsList = _userRepository.GetCardDetails(id); 
+            if(paymentDetailsList.Count() == 0)
             {
                 return null;
             }
-            foreach (var item in x)
+            foreach (Payment item in paymentDetailsList)
             {
                 if (item.ExpiryDate == null)
                 {
@@ -488,7 +443,6 @@ namespace User_Microservice.Services
                         Upi=item.CardNo
                     };
                     paymentDetailsResponseDTO.Upi.Add(upiDTO);
-
                 }
                 else
                 {
@@ -504,10 +458,14 @@ namespace User_Microservice.Services
             }
             return paymentDetailsResponseDTO;
         }
+
+        ///<summary>
+        /// Check user card details
+        ///</summary>
+        ///<return>ErrorDTO</return>
         public ErrorDTO IsCardDetailsExist(UpdateCardDTO cardDTO)
         {
             Payment card = _userRepository.GetPaymentDetails(cardDTO.Id);
-
             card.Id = cardDTO.Id;
             card.UserId = cardDTO.UserId;
             card.ExpiryDate = cardDTO.ExpiryDate;
@@ -521,31 +479,43 @@ namespace User_Microservice.Services
             }
             return null;
         }
+
+        ///<summary>
+        /// Checks user exist or not
+        ///</summary>
+        ///<return>ErrorDTO</return>
         public ErrorDTO CheckUser(Guid id)
         {
-            bool x = _userRepository.CheckUpi(id);
-            if(!x)
+            bool isUpiExist = _userRepository.IsUserExist(id);
+            if(!isUpiExist)
             {
                 return new ErrorDTO() {type="User",description=$"User id not Exist {id}" };
             }
             return null;
         }
-        public ErrorDTO CheckUpi(UpiDTO upiDTO)
+
+        ///<summary>
+        /// Checks Upi exist or not
+        ///</summary>
+        ///<return>ErrorDTO</return>
+        public ErrorDTO CheckUpi(UpiDTO upiDTO, Guid id)
         {
-            User x = _userRepository.GetUserAccount(upiDTO.Id);
-            foreach (var item in x.Payment)
+            User user = _userRepository.GetUserAccount(id);
+            foreach (Payment item in user.Payment)
             {
                 if(item.ExpiryDate == null && item.CardNo == upiDTO.Upi)
                 {
                     return new ErrorDTO() { type = "Upi", description = $"Upi {upiDTO.Upi} already added" };
                 }
             }
-
-
-        
             return null;   
         }
-        public Guid SaveUpi(UpiDTO upiDTO)
+
+        ///<summary>
+        /// Saves user UPI details
+        ///</summary>
+        ///<return>Guid</return>
+        public Guid SaveUpi(UpiDTO upiDTO,Guid id)
         {
             Payment card = new Payment()
             {
@@ -553,72 +523,97 @@ namespace User_Microservice.Services
                 CardNo = upiDTO.Upi,
                 ExpiryDate = null,
                 Id = Guid.NewGuid(),
-                UserId = upiDTO.Id
+                UserId = id
             };
-            var id = _userRepository.SaveCard(card);
-            return id;
+            Guid cardId = _userRepository.SaveCard(card);
+            return cardId;
         }
+
+        ///<summary>
+        /// Checks user details exist or not
+        ///</summary>
+        ///<return>ErrorDTO</return>
         public ErrorDTO IsUpiDetailsExist(UpdateUpiDTO updateUpiDTO)
         {
-            var g = _userRepository.IsUserExist(updateUpiDTO.UserId); 
-            if(g == false)
+            string userId = _context.HttpContext.User.Claims.First(i => i.Type == Constants.Id).Value;
+            bool isUserExist = _userRepository.IsUserExist(Guid.Parse(userId)); 
+            if(isUserExist == false)
             {
                 return new ErrorDTO() {type="User",description="User with id not found" };
             }
-            var t = _userRepository.CheckUpi(updateUpiDTO.Id);
-            if(t == false)
+            bool isUpiExist = _userRepository.CheckUpi(updateUpiDTO.Id);
+            if(isUpiExist == false)
             {
                 return new ErrorDTO() { type = "Upi", description = "Upi with id not found" };
             }
             return null;
         }
+
+        ///<summary>
+        /// Updates user UPI details
+        ///</summary>
+        ///<return>ErrorDTO</return>
         public ErrorDTO UpdateUpiDetails(UpdateUpiDTO updateUpiDTO)
         {
-            List<Payment> g = _userRepository.GetUpiDetails(updateUpiDTO.UserId);
-
-            foreach (var item in g)
+            Guid userId = Guid.Parse(_context.HttpContext.User.Claims.First(i => i.Type == Constants.Id).Value);
+            updateUpiDTO.UserId = userId;
+            List<Payment> paymentList = _userRepository.GetUpiDetails(userId);
+            foreach (Payment item in paymentList)
             {
                 if(item.CardNo == updateUpiDTO.Upi && item.Id != updateUpiDTO.Id)
                 {
                     return new ErrorDTO() {type="Upi",description="Upi already added" };
                 }
             }
-            Payment card = g.Where(find => find.Id == updateUpiDTO.Id).First();
+            Payment card = paymentList.Where(find => find.Id == updateUpiDTO.Id).First();
             card.Name = updateUpiDTO.Name;
             card.CardNo = updateUpiDTO.Upi;
             _userRepository.SaveUpdateCard(card);
             return null;
         }
+
+        ///<summary>
+        /// Checks Payment details exist or not
+        ///</summary>
+        ///<return>ErrorDTO</return>
         public ErrorDTO IsPaymentDetailsExist(CheckOutCart checkOutDetailsDTO)
         {
-            var g = _userRepository.IsAddressIdExist(checkOutDetailsDTO.AddressId);
-            if(!g)
+            bool isAddressIdExist = _userRepository.IsAddressIdExist(checkOutDetailsDTO.AddressId);
+            if(!isAddressIdExist)
             {
                 return new ErrorDTO() {type="Address",description=$"Address with id {checkOutDetailsDTO.AddressId} not exist" };
             }
-            var t = _userRepository.IsPaymentIdExist(checkOutDetailsDTO.PaymentId);
-            if(!t)
+            bool isPaymentIdExist = _userRepository.IsPaymentIdExist(checkOutDetailsDTO.PaymentId);
+            if(!isPaymentIdExist)
             {
                 return new ErrorDTO() {type="Payment",description=$"Payment with id {checkOutDetailsDTO.PaymentId} not exist" };
             }
             return null;
         }
+        ///<summary>
+        /// Checks Address and Payment ids 
+        ///</summary>
+        ///<return>string</return>
         public string GetCheckOutPaymentDetails(CheckOutCart checkOutDetailsDTO)
         {
-            var g = _userRepository.GetAddress(checkOutDetailsDTO.AddressId);
-            var p = _userRepository.GetPaymentDetails(checkOutDetailsDTO.PaymentId);
+            Address address = _userRepository.GetAddress(checkOutDetailsDTO.AddressId);
+            Payment payment = _userRepository.GetPaymentDetails(checkOutDetailsDTO.PaymentId);
             CheckOutResponseDTO checkOutResponse = new CheckOutResponseDTO()
             {
-                Address = g,
-                Payment = p
+                Address = address,
+                Payment = payment
             };
             return JsonConvert.SerializeObject(checkOutResponse);
 
         }
+        ///<summary>
+        /// Checks User id exist or not
+        ///</summary>
+        ///<return>ErrorDTO</return>
         public ErrorDTO IsUserExist(Guid id)
         {
-            var x = IsUserExist(id);
-            if (x != null)
+            ErrorDTO user = IsUserExists(id);
+            if (user != null)
             {
                 return new ErrorDTO() {type="User",description="User accound deleted" };
             }
@@ -626,3 +621,12 @@ namespace User_Microservice.Services
         }
     }
 }
+
+
+
+
+
+
+
+
+

@@ -19,6 +19,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using AutoMapper;
 using User_Microservice.Controllers;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.AspNetCore.Http;
 
 namespace User_Microservice
 {
@@ -40,15 +42,17 @@ namespace User_Microservice
             services.AddAutoMapper(typeof(Startup));
             services.AddTransient<IUserServices, UserServices>();
             services.AddTransient<IUserRepository, UserRepository>();
-            services.AddHttpClient("cart", config =>
-                 config.BaseAddress = new System.Uri("http://localhost:5000"));
+            //services.AddHttpClient("cart", config =>
+            //     config.BaseAddress = new System.Uri("http://localhost:5000"));
             var serviceProvider = services.BuildServiceProvider();
             var logger = serviceProvider.GetService<ILogger<UserController>>();
+            services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddSingleton(typeof(ILogger), logger);
             services.AddControllersWithViews()
             .AddNewtonsoftJson(options =>
             options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
             );
-            services.AddSingleton(typeof(ILogger), logger);
+            
             services.AddAuthentication(option =>
             {
                 option.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -69,7 +73,6 @@ namespace User_Microservice
                         NameClaimType = "hhhh"
                     };
                 });
-            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

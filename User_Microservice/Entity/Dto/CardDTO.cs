@@ -20,7 +20,7 @@ namespace User_Microservice.Entity.Dto
         [JsonProperty(PropertyName = "card_no")]
         public string CardNo { get; set; }
 
-
+        [Required]
         [JsonProperty(PropertyName = "expiry_date")]
         public string ExpiryDate { get; set; }
     }

@@ -10,6 +10,7 @@ namespace User_Microservice.Entity.Dto
     public class UpdateUserDTO
     {
         [Required]
+        [JsonProperty(PropertyName = "id")]
         public Guid Id { get; set; }
 
         [Required]

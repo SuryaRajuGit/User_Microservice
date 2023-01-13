@@ -101,30 +101,77 @@ namespace User_Microservice.Contracts
         ///<return>ErrorDTO</return>
         public ErrorDTO DeleteAccount(Guid id);
 
-
+        ///<summary>
+        /// check user details exist
+        ///</summary>
+        ///<return>ErrorDTO</return>
         public ErrorDTO IsUserDetailsAlreadyExist(UpdateUserDTO updateUserDTO);
 
+        ///<summary>
+        /// Check user card details
+        ///</summary>
+        ///<return>ErrorDTO</return>
         public PaymentDetailsResponseDTO GetPaymentDetails(Guid id);
 
+        ///<summary>
+        /// Check user card details
+        ///</summary>
+        ///<return>ErrorDTO</return>
         public ErrorDTO IsCardDetailsExist(UpdateCardDTO updateCardDTO);
 
+        ///<summary>
+        /// Checks user exist or not
+        ///</summary>
+        ///<return>ErrorDTO</return>
         public ErrorDTO CheckUser(Guid id);
 
-        public ErrorDTO CheckUpi(UpiDTO upiDTO);
+        ///<summary>
+        /// Checks Upi exist or not
+        ///</summary>
+        ///<return>ErrorDTO</return>
+        public ErrorDTO CheckUpi(UpiDTO upiDTO,Guid id);
 
-        public Guid SaveUpi(UpiDTO upiDTO);
+        ///<summary>
+        /// Saves user UPI details
+        ///</summary>
+        ///<return>Guid</return>
+        public Guid SaveUpi(UpiDTO upiDTO, Guid id);
 
+        ///<summary>
+        /// Checks user details exist or not
+        ///</summary>
+        ///<return>ErrorDTO</return>
         public ErrorDTO IsUpiDetailsExist(UpdateUpiDTO updateUpiDTO);
 
+        ///<summary>
+        /// Updates user UPI details
+        ///</summary>
+        ///<return>ErrorDTO</return>
         public ErrorDTO UpdateUpiDetails(UpdateUpiDTO updateUpiDTO);
 
+        ///<summary>
+        /// Checks Payment details exist or not
+        ///</summary>
+        ///<return>ErrorDTO</return>
         public ErrorDTO IsPaymentDetailsExist(CheckOutCart checkOutDetailsDTO);
 
+        ///<summary>
+        /// Checks Address and Payment ids 
+        ///</summary>
+        ///<return>string</return>
         public string GetCheckOutPaymentDetails(CheckOutCart checkOutDetailsDTO);
 
-       // public string GetCheckOutDetails(CheckOutDetailsDTO checkOutDetailsDTO);
-       public ErrorDTO IsUserDetailsExist(UpdateCardDTO cardDTO);
+        // public string GetCheckOutDetails(CheckOutDetailsDTO checkOutDetailsDTO);
+        ///<summary>
+        /// checks user details exist 
+        ///</summary>
+        ///<return>ErrorDTO</return>
+        public ErrorDTO IsUserDetailsExist(UpdateCardDTO cardDTO);
 
+        ///<summary>
+        /// Checks User id exist or not
+        ///</summary>
+        ///<return>ErrorDTO</return>
         public ErrorDTO IsUserExist(Guid id);
 
     }
