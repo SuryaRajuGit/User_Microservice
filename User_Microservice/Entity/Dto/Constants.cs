@@ -24,5 +24,7 @@ namespace User_Microservice.Entity.Dto
         public const string Admin = "Admin";
 
         public const string ADMIN = "ADMIN";
+
+        public const string Url = "http://localhost:5000";
     }
 }

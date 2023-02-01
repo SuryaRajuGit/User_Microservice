@@ -5,13 +5,8 @@ using System.Threading.Tasks;
 
 namespace User_Microservice.Entity.Models
 {
-    public class Address
+    public class Address : BaseModel
     {
-        ///<summary>
-        /// Address id
-        ///</summary>
-        public Guid Id { get; set; }
-
         ///<summary>
         /// Foregin key User id
         ///</summary>

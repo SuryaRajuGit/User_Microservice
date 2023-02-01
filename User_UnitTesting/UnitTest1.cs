@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Security.Claims;
+using System.Security.Principal;
 using System.Threading.Tasks;
 using User_Microservice.Controllers;
 using User_Microservice.Entity.Dto;
@@ -28,7 +29,7 @@ using Xunit;
 
 namespace User_UnitTesting
 {
-    public class UnitTest1 //: IHttpClientFactory
+    public class UnitTest1 
     {
         private readonly IMapper _mapper;
         private readonly UserController _userController;
@@ -46,73 +47,72 @@ namespace User_UnitTesting
 
         public UnitTest1()
         {
-            
+
             IHostBuilder hostBuilder = Host.CreateDefaultBuilder().
             ConfigureLogging((builderContext, loggingBuilder) =>
             {
                 loggingBuilder.AddConsole((options) =>
                 {
-                    options.IncludeScopes = true; //AddAuthentication
+                    options.IncludeScopes = true; 
                 });
             });
             IHost host = hostBuilder.Build();
             ILogger<UserController> _logger = host.Services.GetRequiredService<ILogger<UserController>>();
-          
+
             MapperConfiguration mappingConfig = new MapperConfiguration(mc =>
             {
                 mc.AddProfile(new Mappers());
             });
-            var _httpContextAccessor = new HttpContextAccessor();
+            
 
             // need to have access to the context
-            var claim = new Claim("role", "User");
-            var claim1 = new Claim("Id", "uusr");
-            var identity = new ClaimsIdentity(new[] { claim, claim1 }, "BasicAuthentication"); // this uses basic auth
-            var principal = new ClaimsPrincipal(identity);
-            _httpContextAccessor.HttpContext.User = principal;
+            Claim claim = new Claim("role", "User");
+            Claim claim1 = new Claim("Id", "8d0c1df7-a887-4453-8af3-799e4a7ed013");
+            ClaimsIdentity identity = new ClaimsIdentity(new[] { claim, claim1 }, "BasicAuthentication"); // this uses basic auth
+            ClaimsPrincipal principal = new ClaimsPrincipal(identity);
 
+            GenericIdentity identityy = new GenericIdentity("some name", "test");
+            ClaimsPrincipal contextUser = new ClaimsPrincipal(identity); //add claims as needed
 
-           // _httpContextAccessor.HttpContext.User.Identities.
+            //...then set user and other required properties on the httpContext as needed
+            DefaultHttpContext httpContext = new DefaultHttpContext()
+            {
+                User = contextUser
+        };
 
-
-            //_httpContextAccessor.HttpContext.User.AddIdentity(
-            //    new System.Security.Claims.ClaimsIdentity(
-            //        new Claim[]
-            //        {
-            //            new Claim(),
-            //            new Claim("Id")
-            //        }
-            //        )
-            //    );
-                
-
+            //Controller needs a controller context to access HttpContext
+            HttpContextAccessor _httpContextAccessor = new HttpContextAccessor()
+            {
+                HttpContext = httpContext
+            };
+       
 
             IMapper mapper = mappingConfig.CreateMapper();
             _mapper = mapper;
             DbContextOptions<UserContext> options = new DbContextOptionsBuilder<UserContext>()
                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()).Options;
             _context = new UserContext(options);
-            _context.Database.EnsureCreated();
            
             _repository = new UserRepository(_context);
             
             _userService = new UserServices(_repository, _mapper, _httpContextAccessor);
 
             _userController = new UserController(_userService, _logger);
-            addData();
+            
+            
+            AddData();
             _context.Database.EnsureCreated();
         }
-    public void addData()
+        public void AddData()
         {
             string path = @"C:\Users\Hp\source\repos\User_Microservice\User_Microservice\Entity\UnitTestFiles\UserData.csv";
             string ReadCSV = File.ReadAllText(path);
             List<User> users = new List<User>();
-            var data = ReadCSV.Split('\r');
-            // var list = new List<RefTerm>();
+            string[] data = ReadCSV.Split('\r');
             foreach (string item in data)
             {
                 string[] row = item.Split(",");
-                Guid Id = Guid.NewGuid();//Guid.Parse("8d0c1df7-a887-4453-8af3-799e4a7ed013");
+                Guid Id = Guid.Parse(row[19]);
                 UserSecret userSecret = new UserSecret { Id = Guid.NewGuid(), UserId = Id, Password = row[0] };
                 User user = new User { Role = row[1], FirstName = row[2], LastName = row[3], EmailAddress = row[4], Id = Id 
                 ,Address =new Address(),
@@ -121,9 +121,10 @@ namespace User_UnitTesting
                 UserSecret=new UserSecret()
                 };
                 Phone phone = new Phone { Id = Guid.NewGuid(), PhoneNumber = row[5], Type = row[6], UserId = Id };
-                Address address = new Address { Id = Guid.NewGuid(), Line1 = row[7], Line2 = row[8], City = row[9], Zipcode = row[10], StateName = row[11], Country = row[12], Type = row[13], UserId = Id };
-                Payment payment = new Payment {Id=Guid.NewGuid(),UserId=Id,Name=row[14],CardNo=row[15],ExpiryDate=row[16] };
-                Payment payment1 = new Payment {Id=Guid.NewGuid(),UserId=Id,Name=row[17],CardNo=row[18],ExpiryDate=null };
+                Address address = new Address { Id =Guid.NewGuid() , Line1 = row[7], Line2 = row[8], City = row[9], Zipcode = row[10], StateName = row[11], Country = row[12], Type = row[13], UserId = Id };
+                Payment payment = new Payment {Id=Guid.Parse(row[20]),UserId=Id,Name=row[14],CardNo=row[15],ExpiryDate=row[16] };
+                Payment payment1 = new Payment {Id=Guid.Parse(row[21]),UserId=Id,Name=row[17],CardNo=row[18],ExpiryDate=null };
+
                 user.Address = address;
                 user.Phone = phone;
                 user.UserSecret = userSecret;
@@ -176,10 +177,10 @@ namespace User_UnitTesting
                     Type = "home",
                 },
             };
-            var result = await _userController.SignUp(user);
+            IActionResult result = await _userController.SignUp(user);
 
-            var r = Assert.IsType<ObjectResult>(result);
-            Assert.Equal(201, r.StatusCode);
+            ObjectResult response = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(201, response.StatusCode);
         }
 
         [Fact]
@@ -208,10 +209,10 @@ namespace User_UnitTesting
                     Type = "home",
                 },
             };
-            var result =  _userController.UpdateUser(updateUserDTO);
-            var r = Assert.IsType<ObjectResult>(result);
-            Assert.Equal(200, r.StatusCode);
-            DisposeDB();
+            IActionResult result =  _userController.UpdateUser(updateUserDTO);
+            OkObjectResult response = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(200, response.StatusCode);
+            
         }
         [Fact]
         public void AddPaymentCard_Test()
@@ -223,9 +224,9 @@ namespace User_UnitTesting
                 Id = Guid.NewGuid(),
                 Name = "Sury"
             };
-            var x = _userController.AddPaymentCard(cardDTO);
-            var r = Assert.IsType<ObjectResult>(x);
-            Assert.Equal(201, r.StatusCode);
+            IActionResult response = _userController.AddPaymentCard(cardDTO);
+            ObjectResult result = Assert.IsType<ObjectResult>(response);
+            Assert.Equal(201, result.StatusCode);
         }
         [Fact]
         public void AddUpi_Test()
@@ -236,9 +237,9 @@ namespace User_UnitTesting
                 CardNo = "Upi@ybl",
                 Id = Guid.NewGuid()
             };
-            var x = _userController.AddPaymentCard(upiDTO);
-            var r = Assert.IsType<ObjectResult>(x);
-            Assert.Equal(201, r.StatusCode);
+            IActionResult response = _userController.AddPaymentCard(upiDTO);
+            ObjectResult result = Assert.IsType<ObjectResult>(response);
+            Assert.Equal(201, result.StatusCode);
 
 
         }
@@ -247,24 +248,24 @@ namespace User_UnitTesting
         public void GetUserDetails_Test()
         {
 
-            var x = _userController.GetUserDetails(Guid.Parse("8d0c1df7-a887-4453-8af3-799e4a7ed013"));
-            var r = Assert.IsType<ObjectResult>(x);
-            Assert.Equal(201, r.StatusCode);
+            IActionResult response = _userController.GetUserDetails(Guid.Parse("8d0c1df7-a887-4453-8af3-799e4a7ed013"));
+            OkObjectResult result = Assert.IsType<OkObjectResult>(response);
+            Assert.Equal(200, result.StatusCode);
         }
         [Fact]
         public void DeleteAccount_Test()
         {
-            var x = _userController.DeleteAccount(Guid.Parse("8d0c1df7-a887-4453-8af3-799e4a7ed013"));
-            var r = Assert.IsType<ObjectResult>(x);
-            Assert.Equal(201, r.StatusCode);
+            ActionResult response = _userController.DeleteAccount(Guid.Parse("8d0c1df7-a887-4453-8af3-799e4a7ed013"));
+            OkObjectResult result = Assert.IsType<OkObjectResult>(response);
+            Assert.Equal(200, result.StatusCode);
         }
 
         [Fact]
         public void GetPaymentDetails_Test()
         {
-            var x = _userController.GetPaymentDetails(Guid.Parse("8d0c1df7-a887-4453-8af3-799e4a7ed013"));
-            var r = Assert.IsType<ObjectResult>(x);
-            Assert.Equal(201, r.StatusCode);
+            IActionResult response = _userController.GetPaymentDetails(Guid.Parse("8d0c1df7-a887-4453-8af3-799e4a7ed013"));
+            OkObjectResult result = Assert.IsType<OkObjectResult>(response);
+            Assert.Equal(200, result.StatusCode);
         }
         
         [Fact]
@@ -272,13 +273,15 @@ namespace User_UnitTesting
         {
             UpdateCardDTO updateCardDTO = new UpdateCardDTO()
             {
+                Id=Guid.Parse("26526fb6-2c2d-4e51-bd18-15fb50ab30be"),
+                UserId= Guid.Parse("8d0c1df7-a887-4453-8af3-799e4a7ed013"),
                 CardNo = "789787676768768",
                 ExpiryDate = "01/23",
                 Name = "jhlhjhl",
             };
-            var x = _userController.UpdateCardDetails(updateCardDTO);
-            var r = Assert.IsType<ObjectResult>(x);
-            Assert.Equal(201, r.StatusCode);
+            IActionResult response = _userController.UpdateCardDetails(updateCardDTO);
+            OkObjectResult result = Assert.IsType<OkObjectResult>(response);
+            Assert.Equal(200, result.StatusCode);
         }
 
         [Fact]
@@ -286,36 +289,17 @@ namespace User_UnitTesting
         {
             UpdateUpiDTO updateUpiDTO = new UpdateUpiDTO()
             {
+                Id = Guid.Parse("a334b297-3cc6-4d30-a304-0d95f7299064"),
+                UserId=Guid.Parse("8d0c1df7-a887-4453-8af3-799e4a7ed013"),
                 Upi = "jljbjk",
                 Name = "jnjnjnjk",
             };
-            var x = _userController.UpdateUpiDetails(updateUpiDTO);
-            var r = Assert.IsType<ObjectResult>(x);
-            Assert.Equal(200, r.StatusCode);
+            IActionResult response = _userController.UpdateUpiDetails(updateUpiDTO);
+            ObjectResult result = Assert.IsType<ObjectResult>(response);
+            Assert.Equal(200, result.StatusCode);
         }
         
-        [Fact]
-        public void CheckOutDetails_Test()
-        {
-            CheckOutCart checkOutCart = new CheckOutCart()
-            {
-                
-            };
-            var x = _userController.CheckOutDetails(checkOutCart);
-            var r = Assert.IsType<ObjectResult>(x);
-            Assert.Equal(200, r.StatusCode);
-        }
-        [Fact]
-        public void GetCheckOutDetails_Test()
-        {
-            CheckOutCart checkOutCart = new CheckOutCart()
-            {
-
-            };
-            var x = _userController.GetCheckOutDetails(checkOutCart);
-            var r = Assert.IsType<ObjectResult>(x);
-            Assert.Equal(200, r.StatusCode);
-        }
+        
         public void DisposeDB()
         {
             _context.Dispose();

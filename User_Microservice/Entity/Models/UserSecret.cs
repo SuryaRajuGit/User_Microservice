@@ -5,12 +5,9 @@ using System.Threading.Tasks;
 
 namespace User_Microservice.Entity.Models
 {
-    public class UserSecret
+    public class UserSecret : BaseModel
     {
-        ///<summary>
-        /// Id of the user
-        ///</summary>
-        public Guid Id { get; set; }
+
 
         public Guid UserId { get; set; }
         public User User { get; set; }

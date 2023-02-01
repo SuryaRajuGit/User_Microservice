@@ -139,7 +139,7 @@ namespace User_Microservice.Controllers
                 _logger.LogError($"User details {isUserDetailsAlreadyExist} already Exist");
                 return StatusCode(409, isUserDetailsAlreadyExist);
             }
-            _userService.SaveUpadateUser(updateUserDTO);
+            _userService.SaveUpdateUser(updateUserDTO);
             _logger.LogInformation("User details Updated Successfully");
             return Ok("User details Updated Successfully");
         }
@@ -160,14 +160,14 @@ namespace User_Microservice.Controllers
                 ErrorDTO badRequest = _userService.ModelStateInvalid(ModelState);
                 return BadRequest(badRequest);
             }
-            Guid id = Guid.Parse(this.User.Claims.First(item => item.Type == "Id").Value);
-            ErrorDTO isCardExists = _userService.IsCardExists(cardDTO.CardNo,id);
+            
+            ErrorDTO isCardExists = _userService.IsCardExists(cardDTO.CardNo);
             if (isCardExists != null)
             {
                 _logger.LogError("Card no already exist");
                 return StatusCode(409, isCardExists);
             }
-            Guid saveCard = _userService.SaveCard(cardDTO, id);
+            Guid saveCard = _userService.SaveCard(cardDTO);
             _logger.LogInformation("New paymanent card added successfully");
             return StatusCode(201,saveCard);
         }

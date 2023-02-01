@@ -25,7 +25,7 @@ namespace User_Microservice.Repository
         ///<return>bool</return>
         public bool IsEmailExists(string email)
         {
-            return _userContext.User.Any(term => term.EmailAddress == email);
+            return _userContext.User.Any(term => term.EmailAddress == email && term.IsActive );
         }
 
         ///<summary>
@@ -35,7 +35,7 @@ namespace User_Microservice.Repository
         ///<return>bool</return>
         public bool IsPhoneExists(string phone)
         {
-            return _userContext.Phone.Any(term => term.PhoneNumber == phone);
+            return _userContext.Phone.Any(term => term.PhoneNumber == phone && term.IsActive);
         }
 
         ///<summary>
@@ -45,7 +45,7 @@ namespace User_Microservice.Repository
         public bool IsAddressExists(AddressDTO Address)
         {
             string address = JsonConvert.SerializeObject(Address);
-            foreach (Address item in _userContext.Address)
+            foreach (Address item in _userContext.Address.Where(sel => sel.IsActive))
             {
                 AddressDTO addressDTO1 = new AddressDTO()
                 {
@@ -72,7 +72,9 @@ namespace User_Microservice.Repository
         ///<return>User Guid</return>
         public Guid GetUserId(string email)
         {
-            return _userContext.User.Where(item => item.EmailAddress == email).Select(term => term.Id).FirstOrDefault(); 
+           
+            
+            return _userContext.User.Where(item => item.EmailAddress == email && item.IsActive).Select(term => term.Id).FirstOrDefault(); 
 
         }
 
@@ -82,6 +84,7 @@ namespace User_Microservice.Repository
         ///<return>User Guid</return>
         public Guid SaveUser(User user)
         {
+            user.CreatedDate = DateTime.Now;
             _userContext.User.Add(user);
             _userContext.SaveChanges();
             return user.Id;
@@ -105,7 +108,7 @@ namespace User_Microservice.Repository
         ///<return>bool</return>
         public bool IsCardExists(string cardNo,Guid id)
         {
-            return _userContext.Payment.Where(find => find.UserId == id).Any(term => term.CardNo == cardNo);
+            return _userContext.Payment.Where(find => find.UserId == id && find.IsActive).Any(term => term.CardNo == cardNo);
         }
 
         ///<summary>
@@ -203,7 +206,9 @@ namespace User_Microservice.Repository
         ///<return>User dto</return>
         public User GetUserDetails(Guid id)
         {
-            return  _userContext.User.Include(src => src.Phone).Include(src => src.Address).Include(src => src.Payment).Where(find => find.Id == id).FirstOrDefault();
+            return _userContext.User
+                .Include(sel => sel.Payment.Where(sel => sel.IsActive))
+                .Where(sel => sel.Id == id && sel.IsActive).FirstOrDefault();
         }
 
         ///<summary>

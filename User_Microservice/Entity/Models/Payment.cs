@@ -5,12 +5,9 @@ using System.Threading.Tasks;
 
 namespace User_Microservice.Entity.Models
 {
-    public class Payment
+    public class Payment : BaseModel
     {
-        ///<summary>
-        /// Card id
-        ///</summary>
-        public Guid Id { get; set; }
+
 
         ///<summary>
         /// Forgein key User id

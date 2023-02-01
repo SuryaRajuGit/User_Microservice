@@ -5,12 +5,8 @@ using System.Threading.Tasks;
 
 namespace User_Microservice.Entity.Models
 {
-    public class Phone
+    public class Phone : BaseModel
     {
-        ///<summary>
-        /// Phone id
-        ///</summary>
-        public Guid Id { get; set; }
 
         ///<summary>
         /// Foregin key user id

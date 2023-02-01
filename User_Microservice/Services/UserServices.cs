@@ -11,6 +11,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -39,8 +40,8 @@ namespace User_Microservice.Services
             IHostBuilder hostBuilder1 = Host.CreateDefaultBuilder()
                 .ConfigureServices(Services =>
                 {
-                    Services.AddHttpClient("cart", config =>
-            config.BaseAddress = new System.Uri("http://localhost:5000"));
+                    Services.AddHttpClient(Constants.URL, config =>
+            config.BaseAddress = new System.Uri(Constants.Url));
                 });
             IHost host1 = hostBuilder1.Build();
             _httpClientFactory = host1.Services.GetRequiredService<IHttpClientFactory>();
@@ -162,6 +163,7 @@ namespace User_Microservice.Services
             }
             string result = await response.Content.ReadAsStringAsync();
             object data = JsonConvert.DeserializeObject(result);
+            user.CreatedBy = id;
             Guid responseId = _userRepository.SaveUser(user);
             return responseId;
         }
@@ -200,8 +202,9 @@ namespace User_Microservice.Services
         /// Checks whether the card details already exists.
         ///</summary>
         ///<return>ErrorDTO</return>
-        public ErrorDTO IsCardExists(string cardNo,Guid id)
+        public ErrorDTO IsCardExists(string cardNo)
         {
+            Guid id = Guid.Parse(_context.HttpContext.User.Claims.First(i => i.Type == Constants.Id).Value);
             bool isCardExists = _userRepository.IsCardExists(cardNo,id);
             if(isCardExists)
             {
@@ -214,11 +217,15 @@ namespace User_Microservice.Services
         /// Saves user payment card details.
         ///</summary>
         ///<return>id</return>
-        public Guid SaveCard(CardDTO cardDTO,Guid id)
+        public Guid SaveCard(CardDTO cardDTO)
         {
+            Guid id = Guid.Parse(_context.HttpContext.User.Claims.First(i => i.Type == Constants.Id).Value);
             Payment paymentCard = _mapper.Map<Payment>(cardDTO);
             paymentCard.Id = Guid.NewGuid();
             paymentCard.UserId = id;
+            paymentCard.CreatedDate = DateTime.Now;
+            paymentCard.CreatedBy = id;
+            paymentCard.IsActive = true;
             return  _userRepository.SaveCard(paymentCard);
         }
 
@@ -327,30 +334,49 @@ namespace User_Microservice.Services
         ///<summary>
         /// Saves updated user details
         ///</summary>
-        public void SaveUpadateUser(UpdateUserDTO updateUserDTO)
+        public void SaveUpdateUser(UpdateUserDTO updateUserDTO)
         {
-            SymmetricAlgorithm algorithm = DES.Create();
-            ICryptoTransform transform = algorithm.CreateEncryptor(this.key, this.iv);
-            byte[] inputbuffer = Encoding.Unicode.GetBytes(updateUserDTO.Password);
-            byte[] outputBuffer = transform.TransformFinalBlock(inputbuffer, 0, inputbuffer.Length);
-            string password = Convert.ToBase64String(outputBuffer);
+            
+            if(updateUserDTO.Password != null)
+            {
+                SymmetricAlgorithm algorithm = DES.Create();
+                ICryptoTransform transform = algorithm.CreateEncryptor(this.key, this.iv);
+                byte[] inputbuffer = Encoding.Unicode.GetBytes(updateUserDTO.Password);
+                byte[] outputBuffer = transform.TransformFinalBlock(inputbuffer, 0, inputbuffer.Length);
+                string password = Convert.ToBase64String(outputBuffer);
+                updateUserDTO.Password = password;
+            }
+            User accountInDb = _userRepository.GetUserAccount(updateUserDTO.Id);
+            var properties = typeof(UpdateUserDTO).GetProperties();
+            foreach (PropertyInfo property in properties)
+            {
+                string propertyName = property.Name;
+                object propertyValue = property.GetValue(updateUserDTO);
 
-            User account = _userRepository.GetUserAccount(updateUserDTO.Id);
-            account.FirstName = updateUserDTO.FirstName;
-            account.LastName = updateUserDTO.LastName;
-            account.EmailAddress = updateUserDTO.EmailAddress;
-            account.Role = null;
-            account.Phone.PhoneNumber = updateUserDTO.Phone.PhoneNumber;
-            account.Phone.Type = updateUserDTO.Phone.Type;
-            account.Address.Line1 = updateUserDTO.Address.Line1;
-            account.Address.Line2 = updateUserDTO.Address.Line2;
-            account.Address.Zipcode = updateUserDTO.Address.Zipcode;
-            account.Address.StateName = updateUserDTO.Address.StateName;
-            account.Address.City = updateUserDTO.Address.City;
-            account.Address.Country = updateUserDTO.Address.Country;
-            account.Address.Type = updateUserDTO.Address.Type;
-            account.UserSecret.Password = password;
-            _userRepository.SaveUpdateUser(account);
+                if (propertyValue != null)
+                {
+                    accountInDb.GetType().GetProperty(propertyName).SetValue(accountInDb, propertyValue);
+                }
+            }
+
+            //accountInDb.FirstName = updateUserDTO.FirstName;
+            //accountInDb.LastName = updateUserDTO.LastName;
+            //account.EmailAddress = updateUserDTO.EmailAddress;
+            //account.Role = null;
+            //account.Phone.PhoneNumber = updateUserDTO.Phone.PhoneNumber;
+            //account.Phone.Type = updateUserDTO.Phone.Type;
+            //account.Address.Line1 = updateUserDTO.Address.Line1;
+            //account.Address.Line2 = updateUserDTO.Address.Line2;
+            //account.Address.Zipcode = updateUserDTO.Address.Zipcode;
+            //account.Address.StateName = updateUserDTO.Address.StateName;
+            //account.Address.City = updateUserDTO.Address.City;
+            //account.Address.Country = updateUserDTO.Address.Country;
+            //account.Address.Type = updateUserDTO.Address.Type;
+            //account.UserSecret.Password = password;
+            //account.CreatedBy = account.Id;
+            accountInDb.UpdatedBy = accountInDb.Id;
+            accountInDb.UpdateDate = DateTime.Now;
+            _userRepository.SaveUpdateUser(accountInDb);
         }
 
         ///<summary>
@@ -383,37 +409,40 @@ namespace User_Microservice.Services
         ///<return>ErrorDTO</return>
         public ErrorDTO IsUserDetailsAlreadyExist(UpdateUserDTO updateUserDTO)
         {
-            bool isUserExist = _userRepository.IsUserExist(updateUserDTO.Id);
-            if (!isUserExist)
+            if (updateUserDTO.EmailAddress != null)
             {
-                return new ErrorDTO() { type = "User", description = "User id not found" };
+                bool isUpdateUserEmailExists = _userRepository.IsUpdateUserEmailExists(updateUserDTO.EmailAddress, updateUserDTO.Id);
+                if (!isUpdateUserEmailExists)
+                {
+                    return new ErrorDTO { type = "Email", description = updateUserDTO.EmailAddress + " Email already exists" };
+                }
             }
-            bool isUpdateUserEmailExists = _userRepository.IsUpdateUserEmailExists(updateUserDTO.EmailAddress, updateUserDTO.Id);
-            if (!isUpdateUserEmailExists)
+            if(updateUserDTO.Phone != null)
             {
-                return new ErrorDTO { type = "Email", description = updateUserDTO.EmailAddress + " Email already exists" };
+                bool isUpdateUserPhoneExists = _userRepository.IsUpdateUserPhoneExists(updateUserDTO.Phone.PhoneNumber, updateUserDTO.Id);
+                if (!isUpdateUserPhoneExists)
+                {
+                    return new ErrorDTO { type = "Phone number", description = updateUserDTO.Phone.PhoneNumber + "Phone already exists" };
+                }
             }
-            bool isUpdateUserPhoneExists = _userRepository.IsUpdateUserPhoneExists(updateUserDTO.Phone.PhoneNumber, updateUserDTO.Id);
-            if (!isUpdateUserPhoneExists)
+            if(updateUserDTO.Address != null)
             {
-                return new ErrorDTO { type = "Phone number", description = updateUserDTO.Phone.PhoneNumber + "Phone already exists" };
+                Address address = new Address()
+                {
+                    Line1 = updateUserDTO.Address.Line1,
+                    Line2 = updateUserDTO.Address.Line2,
+                    City = updateUserDTO.Address.City,
+                    StateName = updateUserDTO.Address.StateName,
+                    Country = updateUserDTO.Address.Country,
+                    Zipcode = updateUserDTO.Address.Zipcode,
+                    Type = updateUserDTO.Address.Type
+                };
+                bool isAddressExists = _userRepository.IsUpdateUserAddressExists(address, updateUserDTO.Id);
+                if (isAddressExists)
+                {
+                    return new ErrorDTO { type = "Address", description = updateUserDTO.Address + " Address  already exists" };
+                }
             }
-            Address address = new Address()
-            {
-                Line1 =updateUserDTO.Address.Line1,
-                Line2=updateUserDTO.Address.Line2,
-                City=updateUserDTO.Address.City,
-                StateName=updateUserDTO.Address.StateName,
-                Country=updateUserDTO.Address.Country,
-                Zipcode=updateUserDTO.Address.Zipcode,
-                Type=updateUserDTO.Address.Type
-            };
-            bool isAddressExists = _userRepository.IsUpdateUserAddressExists(address, updateUserDTO.Id);
-            if (isAddressExists)
-            {
-                return new ErrorDTO { type = "Address", description = updateUserDTO.Address + " Address  already exists" };
-            }
-            
             return null;
         }
         ///<summary>
@@ -615,7 +644,7 @@ namespace User_Microservice.Services
             ErrorDTO user = IsUserExists(id);
             if (user != null)
             {
-                return new ErrorDTO() {type="User",description="User accound deleted" };
+                return new ErrorDTO() {type="User",description="User account not found" };
             }
             return null;
         }

@@ -50,13 +50,13 @@ namespace User_Microservice.Contracts
         /// Checks whether the card details already exists.
         ///</summary>
         ///<return>ErrorDTO</return>
-        public ErrorDTO IsCardExists(string cardNo,Guid id);
+        public ErrorDTO IsCardExists(string cardNo);
 
         ///<summary>
         /// Checks whether the card details already exists.
         ///</summary>
         ///<return>Guid</return>
-        public Guid SaveCard(CardDTO cardDTO,Guid id);
+        public Guid SaveCard(CardDTO cardDTO);
 
         //    public Task<ErrorDTO> IsProductExists(ProductDTO productDTO);
 
@@ -87,7 +87,7 @@ namespace User_Microservice.Contracts
         ///<summary>
         /// Saves user details.
         ///</summary>
-        public void SaveUpadateUser(UpdateUserDTO updateUserDTO);
+        public void SaveUpdateUser(UpdateUserDTO updateUserDTO);
 
         ///<summary>
         /// Gets user details .

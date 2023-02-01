@@ -7,12 +7,8 @@ using System.Threading.Tasks;
 
 namespace User_Microservice.Entity.Models
 {
-    public class User
+    public class User : BaseModel
     {
-        ///<summary>
-        /// User id
-        ///</summary>
-        public Guid Id { get; set; }
 
         ///<summary>
         /// first name of the user
