@@ -65,22 +65,19 @@ namespace User_UnitTesting
             });
             
 
-            // need to have access to the context
             Claim claim = new Claim("role", "User");
             Claim claim1 = new Claim("Id", "8d0c1df7-a887-4453-8af3-799e4a7ed013");
-            ClaimsIdentity identity = new ClaimsIdentity(new[] { claim, claim1 }, "BasicAuthentication"); // this uses basic auth
+            ClaimsIdentity identity = new ClaimsIdentity(new[] { claim, claim1 }, "BasicAuthentication"); 
             ClaimsPrincipal principal = new ClaimsPrincipal(identity);
 
             GenericIdentity identityy = new GenericIdentity("some name", "test");
-            ClaimsPrincipal contextUser = new ClaimsPrincipal(identity); //add claims as needed
+            ClaimsPrincipal contextUser = new ClaimsPrincipal(identity);
 
-            //...then set user and other required properties on the httpContext as needed
             DefaultHttpContext httpContext = new DefaultHttpContext()
             {
                 User = contextUser
         };
 
-            //Controller needs a controller context to access HttpContext
             HttpContextAccessor _httpContextAccessor = new HttpContextAccessor()
             {
                 HttpContext = httpContext
@@ -113,23 +110,25 @@ namespace User_UnitTesting
             {
                 string[] row = item.Split(",");
                 Guid Id = Guid.Parse(row[19]);
-                UserSecret userSecret = new UserSecret { Id = Guid.NewGuid(), UserId = Id, Password = row[0] };
+                UserSecret userSecret = new UserSecret { Id = Guid.NewGuid(), UserId = Id, Password = row[0],IsActive=true };
                 User user = new User { Role = row[1], FirstName = row[2], LastName = row[3], EmailAddress = row[4], Id = Id 
                 ,Address =new Address(),
                 Payment =new List<Payment>(),
                 Phone = new Phone(),
-                UserSecret=new UserSecret()
+                UserSecret=new UserSecret(),
+                IsActive=true
                 };
-                Phone phone = new Phone { Id = Guid.NewGuid(), PhoneNumber = row[5], Type = row[6], UserId = Id };
-                Address address = new Address { Id =Guid.NewGuid() , Line1 = row[7], Line2 = row[8], City = row[9], Zipcode = row[10], StateName = row[11], Country = row[12], Type = row[13], UserId = Id };
-                Payment payment = new Payment {Id=Guid.Parse(row[20]),UserId=Id,Name=row[14],CardNo=row[15],ExpiryDate=row[16] };
-                Payment payment1 = new Payment {Id=Guid.Parse(row[21]),UserId=Id,Name=row[17],CardNo=row[18],ExpiryDate=null };
+                Phone phone = new Phone { Id = Guid.NewGuid(),IsActive=true, PhoneNumber = row[5], Type = row[6], UserId = Id };
+                Address address = new Address { Id =Guid.NewGuid(),IsActive=true , Line1 = row[7], Line2 = row[8], City = row[9], Zipcode = row[10], StateName = row[11], Country = row[12], Type = row[13], UserId = Id };
+                Payment payment = new Payment {Id=Guid.Parse(row[20]),UserId=Id,Name=row[14],CardNo=row[15],ExpiryDate=row[16],IsActive=true };
+                Payment payment1 = new Payment {Id=Guid.Parse(row[21]),UserId=Id,Name=row[17],CardNo=row[18],ExpiryDate=null,IsActive=true };
 
                 user.Address = address;
                 user.Phone = phone;
                 user.UserSecret = userSecret;
                 user.Payment.Add(payment);
                 user.Payment.Add(payment1);
+                user.IsActive = true;
                 users.Add(user);   
             }
             _context.AddRange(users);
@@ -149,12 +148,12 @@ namespace User_UnitTesting
 
             Assert.Equal(401, response.StatusCode);
             Assert.IsType<OkObjectResult>(Authorised);
+
         }
 
         [Fact]
         public  async Task SignUp_Test()
         {
-            Guid id = Guid.NewGuid();
             UserDTO user = new UserDTO()
             {
                 Password="User1@23",
@@ -178,9 +177,13 @@ namespace User_UnitTesting
                 },
             };
             IActionResult result = await _userController.SignUp(user);
+            IActionResult result1 = await _userController.SignUp(user);
 
             ObjectResult response = Assert.IsType<ObjectResult>(result);
+            ObjectResult response1 = Assert.IsType<ObjectResult>(result1);
+
             Assert.Equal(201, response.StatusCode);
+            Assert.Equal(409, response1.StatusCode);
         }
 
         [Fact]
@@ -189,10 +192,9 @@ namespace User_UnitTesting
             UpdateUserDTO updateUserDTO = new UpdateUserDTO()
             {
                 Id = Guid.Parse("8d0c1df7-a887-4453-8af3-799e4a7ed013"),
-                Password = "User1@23",
                 FirstName = "sury",
                 LastName = "raj",
-                Address = new AddressDTO()
+                Address = new UpdateAddressDTO()
                 {
                     Line1 = "l",
                     Line2 = "ll",
@@ -203,15 +205,42 @@ namespace User_UnitTesting
                     Type = "woek"
                 },
                 EmailAddress = "surya@gmail.com",
-                Phone = new PhoneDTO()
+                Phone = new UpdatePhoneDTO()
+                {
+                    PhoneNumber = "8142355769",
+                    Type = "home",
+                },
+            };
+            UpdateUserDTO updateUserDTO1 = new UpdateUserDTO()
+            {
+                Id = Guid.Parse("8d0c1df7-a887-4453-8af3-799e4a7ed013"),
+                FirstName = "sury",
+                LastName = "raj",
+                Address = new UpdateAddressDTO()
+                {
+                    Line1 = "l",
+                    Line2 = "ll",
+                    City = "cit",
+                    Country = "cou",
+                    StateName = "state",
+                    Zipcode = "45342",
+                    Type = "woek"
+                },
+                EmailAddress = "admin@gmail.com",
+                Phone = new UpdatePhoneDTO()
                 {
                     PhoneNumber = "8142355769",
                     Type = "home",
                 },
             };
             IActionResult result =  _userController.UpdateUser(updateUserDTO);
+            IActionResult result1 =  _userController.UpdateUser(updateUserDTO1);
+
             OkObjectResult response = Assert.IsType<OkObjectResult>(result);
+            ObjectResult response1 = Assert.IsType<ObjectResult>(result1);
+
             Assert.Equal(200, response.StatusCode);
+            Assert.Equal(409, response1.StatusCode);
             
         }
         [Fact]
@@ -225,8 +254,13 @@ namespace User_UnitTesting
                 Name = "Sury"
             };
             IActionResult response = _userController.AddPaymentCard(cardDTO);
+            IActionResult response1 = _userController.AddPaymentCard(cardDTO);
+
             ObjectResult result = Assert.IsType<ObjectResult>(response);
+            ObjectResult result1 = Assert.IsType<ObjectResult>(response1);
+
             Assert.Equal(201, result.StatusCode);
+            Assert.Equal(409, result1.StatusCode);
         }
         [Fact]
         public void AddUpi_Test()
@@ -238,32 +272,39 @@ namespace User_UnitTesting
                 Id = Guid.NewGuid()
             };
             IActionResult response = _userController.AddPaymentCard(upiDTO);
+            IActionResult response1 = _userController.AddPaymentCard(upiDTO);
+
             ObjectResult result = Assert.IsType<ObjectResult>(response);
+            ObjectResult result1 = Assert.IsType<ObjectResult>(response1);
+
             Assert.Equal(201, result.StatusCode);
-
-
+            Assert.Equal(409, result1.StatusCode);
         }
 
         [Fact]
         public void GetUserDetails_Test()
         {
 
-            IActionResult response = _userController.GetUserDetails(Guid.Parse("8d0c1df7-a887-4453-8af3-799e4a7ed013"));
+            IActionResult response = _userController.GetUserDetails();
+
             OkObjectResult result = Assert.IsType<OkObjectResult>(response);
+
             Assert.Equal(200, result.StatusCode);
         }
         [Fact]
         public void DeleteAccount_Test()
         {
-            ActionResult response = _userController.DeleteAccount(Guid.Parse("8d0c1df7-a887-4453-8af3-799e4a7ed013"));
+            ActionResult response = _userController.DeleteAccount();
+
             OkObjectResult result = Assert.IsType<OkObjectResult>(response);
+
             Assert.Equal(200, result.StatusCode);
         }
 
         [Fact]
         public void GetPaymentDetails_Test()
         {
-            IActionResult response = _userController.GetPaymentDetails(Guid.Parse("8d0c1df7-a887-4453-8af3-799e4a7ed013"));
+            IActionResult response = _userController.GetPaymentDetails();
             OkObjectResult result = Assert.IsType<OkObjectResult>(response);
             Assert.Equal(200, result.StatusCode);
         }
@@ -274,14 +315,25 @@ namespace User_UnitTesting
             UpdateCardDTO updateCardDTO = new UpdateCardDTO()
             {
                 Id=Guid.Parse("26526fb6-2c2d-4e51-bd18-15fb50ab30be"),
-                UserId= Guid.Parse("8d0c1df7-a887-4453-8af3-799e4a7ed013"),
+                CardNo = "789787676768768",
+                ExpiryDate = "01/23",
+                Name = "jhlhjhl",
+            };
+            UpdateCardDTO updateCardDTO1 = new UpdateCardDTO()
+            {
+                Id = Guid.Parse("36526fb6-2c2d-4e51-bd18-15fb50ab30be"),
                 CardNo = "789787676768768",
                 ExpiryDate = "01/23",
                 Name = "jhlhjhl",
             };
             IActionResult response = _userController.UpdateCardDetails(updateCardDTO);
+            IActionResult response1 = _userController.UpdateCardDetails(updateCardDTO1);
+
             OkObjectResult result = Assert.IsType<OkObjectResult>(response);
+            ObjectResult result1 = Assert.IsType<ObjectResult>(response1);
+
             Assert.Equal(200, result.StatusCode);
+            Assert.Equal(404, result1.StatusCode);
         }
 
         [Fact]
@@ -290,13 +342,25 @@ namespace User_UnitTesting
             UpdateUpiDTO updateUpiDTO = new UpdateUpiDTO()
             {
                 Id = Guid.Parse("a334b297-3cc6-4d30-a304-0d95f7299064"),
-                UserId=Guid.Parse("8d0c1df7-a887-4453-8af3-799e4a7ed013"),
+               
+                Upi = "jljbjk",
+                Name = "jnjnjnjk",
+            };
+            UpdateUpiDTO updateUpiDTO1 = new UpdateUpiDTO()
+            {
+                Id = Guid.Parse("a334b297-3cc6-4d30-a304-0d95f7299065"),
+
                 Upi = "jljbjk",
                 Name = "jnjnjnjk",
             };
             IActionResult response = _userController.UpdateUpiDetails(updateUpiDTO);
-            ObjectResult result = Assert.IsType<ObjectResult>(response);
+            IActionResult response1 = _userController.UpdateUpiDetails(updateUpiDTO1);
+
+            OkObjectResult result = Assert.IsType<OkObjectResult>(response);
+            ObjectResult result1 = Assert.IsType<ObjectResult>(response1);
+
             Assert.Equal(200, result.StatusCode);
+            Assert.Equal(404, result1.StatusCode);
         }
         
         

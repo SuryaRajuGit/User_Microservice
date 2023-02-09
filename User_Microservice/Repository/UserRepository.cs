@@ -72,8 +72,6 @@ namespace User_Microservice.Repository
         ///<return>User Guid</return>
         public Guid GetUserId(string email)
         {
-           
-            
             return _userContext.User.Where(item => item.EmailAddress == email && item.IsActive).Select(term => term.Id).FirstOrDefault(); 
 
         }
@@ -96,8 +94,8 @@ namespace User_Microservice.Repository
         ///<return>bool</return>
         public Tuple<string,string> IsLoginDetailsExists(LoginDTO loginDTO)
         {
-            string password = _userContext.User.Where(item => item.EmailAddress == loginDTO.EmailAddress).Select(term => term.UserSecret.Password).FirstOrDefault();
-            string role = _userContext.User.Where(item => item.EmailAddress == loginDTO.EmailAddress).Select(term => term.Role).FirstOrDefault();
+            string password = _userContext.User.Where(item => item.EmailAddress == loginDTO.EmailAddress && item.IsActive).Select(term => term.UserSecret.Password).FirstOrDefault();
+            string role = _userContext.User.Where(item => item.EmailAddress == loginDTO.EmailAddress && item.IsActive).Select(term => term.Role).FirstOrDefault();
            
             return new Tuple<string, string>(role,password);
         }
@@ -128,9 +126,9 @@ namespace User_Microservice.Repository
         ///<return>bool</return>
         public bool IsUpdateUserEmailExists(string emailAddress,Guid userId)
         {
-            foreach (User item in _userContext.User.Where(user => user.Id != userId))
+            foreach (User item in _userContext.User.Where(user => user.Id != userId && user.IsActive))
             {
-                if(item.EmailAddress == emailAddress)
+                if(item.EmailAddress == emailAddress )
                 {
                     return false;
                 }
@@ -144,9 +142,9 @@ namespace User_Microservice.Repository
         ///<return>bool</return>
         public bool IsUpdateUserPhoneExists(string phoneNumber, Guid userId)
         {
-            foreach (User item in _userContext.User.Include(term => term.Phone).Where(user => user.Id != userId))
+            foreach (User item in _userContext.User.Include(term => term.Phone).Where(user => user.Id != userId && user.IsActive))
             {
-                if (item.Phone.PhoneNumber == phoneNumber)
+                if (item.Phone.PhoneNumber == phoneNumber && item.Phone.IsActive)
                 {
                     return false;
                 }
@@ -161,7 +159,7 @@ namespace User_Microservice.Repository
         public bool IsUpdateUserAddressExists(Address address, Guid userId)
         {
             string userAddress = JsonConvert.SerializeObject(address);
-            foreach (Address item in _userContext.Address.Where(find => find.UserId != userId))
+            foreach (Address item in _userContext.Address.Where(find => find.UserId != userId && find.IsActive))
             {
                 Address address1 = new Address()
                 {
@@ -171,7 +169,7 @@ namespace User_Microservice.Repository
                     StateName = item.StateName,
                     Country = item.Country,
                     Zipcode = item.Zipcode,
-                    Type = item.Type
+                    Type = item.Type,
                 };               
                 string addressDTO = JsonConvert.SerializeObject(address1);
                 if (addressDTO == userAddress)
@@ -188,7 +186,7 @@ namespace User_Microservice.Repository
         ///<return>bool</return>
         public bool IsUserExist(Guid userId)
         {
-            return _userContext.User.Any(find => find.Id == userId);
+            return _userContext.User.Any(find => find.Id == userId && find.IsActive);
         }
 
         ///<summary>
@@ -196,7 +194,6 @@ namespace User_Microservice.Repository
         ///</summary>
         public void SaveUpdateUser(User user)
         {
-            _userContext.User.Update(user);
             _userContext.SaveChanges();
         }
 
@@ -207,7 +204,9 @@ namespace User_Microservice.Repository
         public User GetUserDetails(Guid id)
         {
             return _userContext.User
-                .Include(sel => sel.Payment.Where(sel => sel.IsActive))
+                .Include(sel => sel.Address)
+                .Include(sel =>sel.Phone)
+                .Include(sel=>sel.Address)
                 .Where(sel => sel.Id == id && sel.IsActive).FirstOrDefault();
         }
 
@@ -217,17 +216,29 @@ namespace User_Microservice.Repository
         ///<return>bool</return>
         public bool DeleteUser(Guid id)
         {
-            List<User> userList = _userContext.User.ToList();
-            bool isUserExist = _userContext.User.Any(find => find.Id == id);
+            //List<User> userList = _userContext.User.ToList();
+            bool isUserExist = _userContext.User.Any(find => find.Id == id && find.IsActive);
             if(isUserExist)
             {
-                User user = _userContext.User.Include(term => term.Payment).Include(term=>term.Address)
-                    .Include(term => term.UserSecret).Include(term =>term.Payment)
-                    .Where(find => find.Id == id).FirstOrDefault();
-                _userContext.User.Remove(user);
+                User user = _userContext.User.Include(term => term.Payment)
+                    .Include(term=>term.Address)
+                    .Include(term => term.UserSecret)
+                    .Include(sel => sel.Phone)
+                    .Where(find => find.Id == id && find.IsActive).FirstOrDefault();
+                user.IsActive = false;
+                user.UpdateDate = DateTime.Now;
+                user.UpdatedBy = id;
+                user.Address.IsActive = false;
+                user.Phone.IsActive = false;
+                user.UserSecret.IsActive = false;
+                user.Payment.Select(sel => sel.IsActive = false);
+                user.UpdateDate = DateTime.Now;
                 _userContext.SaveChanges();
                 return true;
             }
+
+                     
+
             return false;
         }
         ///<summary>
@@ -236,7 +247,7 @@ namespace User_Microservice.Repository
         ///<return>List<Payment></return>
         public List<Payment> GetCardDetails(Guid id)
         {
-            List<Payment> cardList = _userContext.Payment.Where(find => find.UserId == id).ToList();
+            List<Payment> cardList = _userContext.Payment.Where(find => find.UserId == id && find.IsActive).ToList();
             return cardList;
         }
         ///<summary>
@@ -245,17 +256,17 @@ namespace User_Microservice.Repository
         ///<return>bool</return>
         public bool IsUserPaymentDetailsExist(Guid cardId,Guid userId)
         {
-            User user = _userContext.User.Include(src => src.Payment).Where(find => find.Id == userId).First();
-            return user.Payment.Any(term => term.Id == cardId);
+            User user = _userContext.User.Include(src => src.Payment).Where(find => find.Id == userId && find.IsActive).FirstOrDefault();
+            return user.Payment.Any(term => term.Id == cardId && term.IsActive);
         }
         ///<summary>
         /// Saves user card details and return bool value
         ///</summary>
         ///<return>bool</return>
-        public bool isCardDetailsExist(Payment card)
+        public bool IsCardDetailsExist(Payment card)
         {
-            List<Payment> cardList =  _userContext.Payment.Where(find => find.UserId == card.UserId && find.Id != card.Id).ToList();
-            bool isCardExist = cardList.Any(find => find.CardNo == card.CardNo);
+            List<Payment> cardList =  _userContext.Payment.Where(find => find.UserId == card.UserId && find.Id != card.Id && find.IsActive).ToList();
+            bool isCardExist = cardList.Any(find => find.CardNo == card.CardNo && find.IsActive);
             if(!isCardExist)
             {
                 _userContext.Payment.Update(card);
@@ -270,8 +281,10 @@ namespace User_Microservice.Repository
         ///<return>User</return>
         public User GetUserAccount(Guid id)
         {
-            return _userContext.User.Include(src => src.Phone).Include(src => src.UserSecret).Include(src => src.Address)
-                .Include(src => src.Payment).Where(find => find.Id == id).FirstOrDefault();
+            return _userContext.User.Include(src => src.Phone)
+                .Include(src => src.UserSecret)
+                .Include(src => src.Address)
+                .Include(src => src.Payment).Where(find => find.Id == id && find.IsActive).FirstOrDefault();
 
         }
         ///<summary>
@@ -280,7 +293,7 @@ namespace User_Microservice.Repository
         ///<return>bool</return>
         public bool CheckUpi(Guid id)
         {
-            return _userContext.Payment.Any(find => find.Id == id);
+            return _userContext.Payment.Any(find => find.Id == id && find.IsActive);
         }
 
         ///<summary>
@@ -289,7 +302,7 @@ namespace User_Microservice.Repository
         ///<return>List<Payment></return>
         public List<Payment> GetUpiDetails(Guid userId)
         {
-            return _userContext.Payment.Where(find => find.UserId == userId && find.ExpiryDate == null).ToList();
+            return _userContext.Payment.Where(find => find.UserId == userId && find.ExpiryDate == null && find.IsActive).ToList();
         }
 
         ///<summary>
@@ -307,7 +320,7 @@ namespace User_Microservice.Repository
         ///<return>bool</return>
         public bool IsAddressIdExist(Guid addressId)
         {
-            return _userContext.Address.Any(find =>find.Id ==addressId);
+            return _userContext.Address.Any(find =>find.Id ==addressId && find.IsActive);
         }
 
         ///<summary>
@@ -316,7 +329,7 @@ namespace User_Microservice.Repository
         ///<return>bool</return>
         public bool IsPaymentIdExist(Guid paymentId)
         {
-            return _userContext.Payment.Any(find =>find.Id == paymentId);
+            return _userContext.Payment.Any(find =>find.Id == paymentId && find.IsActive);
         }
         ///<summary>
         /// Gets Addres of the user
@@ -324,7 +337,7 @@ namespace User_Microservice.Repository
         ///<return>Address</return>
         public Address GetAddress(Guid addressId)
         {
-            return _userContext.Address.Where(find => find.Id == addressId).First();
+            return _userContext.Address.Where(find => find.Id == addressId && find.IsActive).First();
         }
 
         ///<summary>
@@ -333,7 +346,7 @@ namespace User_Microservice.Repository
         ///<return>Payment</return>
         public Payment GetPaymentDetails(Guid paymentId)
         {
-            return _userContext.Payment.Where(find => find.Id == paymentId).First();
+            return _userContext.Payment.Where(find => find.Id == paymentId && find.IsActive).First();
         }
     }
 }

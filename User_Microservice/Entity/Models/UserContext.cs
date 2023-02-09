@@ -34,10 +34,10 @@ namespace User_Microservice.Entity.Models
             {
                 string[] row = item.Split(",");
                 Guid Id = Guid.NewGuid();
-                UserSecret userSecret = new UserSecret {Id = Guid.NewGuid(), UserId = Id, Password = row[0]};
-                User user = new User { Role = row[1], FirstName = row[2], LastName = row[3], EmailAddress = row[4], Id = Id };
-                Phone phone = new Phone { Id = Guid.NewGuid(),PhoneNumber =row[5],Type=row[6],UserId=Id };
-                Address address = new Address {Id=Guid.NewGuid(),Line1 = row[7], Line2 = row[8], City = row[9], Zipcode = row[10], StateName = row[11], Country = row[12], Type = row[13],UserId=Id };
+                UserSecret userSecret = new UserSecret {Id = Guid.NewGuid(),IsActive=true, UserId = Id, Password = row[0]};
+                User user = new User { Role = row[1], IsActive = true, FirstName = row[2], LastName = row[3], EmailAddress = row[4], Id = Id };
+                Phone phone = new Phone { Id = Guid.NewGuid(), IsActive = true, PhoneNumber =row[5],Type=row[6],UserId=Id };
+                Address address = new Address {Id=Guid.NewGuid(), IsActive = true, Line1 = row[7], Line2 = row[8], City = row[9], Zipcode = row[10], StateName = row[11], Country = row[12], Type = row[13],UserId=Id };
 
                 modelBuilder.Entity<User>().HasData(user);
                 modelBuilder.Entity<Phone>().HasData(phone);

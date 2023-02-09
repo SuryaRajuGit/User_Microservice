@@ -19,7 +19,7 @@ namespace User_Microservice.Controllers
     {
         private readonly IUserServices _userService;
         private readonly ILogger _logger;
-
+        Guid response = Guid.Empty;
         public UserController(IUserServices userService, ILogger logger)
         {
             _userService = userService;
@@ -91,7 +91,6 @@ namespace User_Microservice.Controllers
                 return StatusCode(409, phone);
             }
             ErrorDTO address = _userService.IsAddressExists(userDTO.Address);
-            Guid response = Guid.Empty;
             if (address != null)
             {
                 _logger.LogError("Address already exist.");
@@ -126,12 +125,6 @@ namespace User_Microservice.Controllers
                 _logger.LogError("Entered wrong data");
                 ErrorDTO badRequest = _userService.ModelStateInvalid(ModelState);
                 return BadRequest(badRequest);
-            }
-            ErrorDTO isUserExists = _userService.IsUserExists(updateUserDTO.Id);
-            if (isUserExists != null)
-            {
-                _logger.LogError($"User id {isUserExists} not found.");
-                return StatusCode(404, isUserExists);
             }
             ErrorDTO isUserDetailsAlreadyExist = _userService.IsUserDetailsAlreadyExist(updateUserDTO);
             if (isUserDetailsAlreadyExist != null)
@@ -213,8 +206,8 @@ namespace User_Microservice.Controllers
         ///<param name="id">User id</param>
         ///<returns>User deatils</returns>
         [HttpGet]
-        [Route("api/account/{id}")]
-        public IActionResult GetUserDetails([FromRoute] Guid id)
+        [Route("api/account")]
+        public IActionResult GetUserDetails()
         {
             _logger.LogError("Geting user details started successfully");
             if (!ModelState.IsValid)
@@ -223,7 +216,7 @@ namespace User_Microservice.Controllers
                 ErrorDTO badRequest = _userService.ModelStateInvalid(ModelState);
                 return BadRequest(badRequest);
             }
-            UserDetailsResponse userDetails = _userService.GetuserDetails(id);
+            UserDetailsResponse userDetails = _userService.GetuserDetails();
             if (userDetails == null)
             {
                 _logger.LogError("User not found with id");
@@ -239,8 +232,8 @@ namespace User_Microservice.Controllers
         ///<param name="id">User id</param>
         ///<returns>Account deleted successfully</returns>
         [HttpDelete]
-        [Route("api/account/{id}")]
-        public  ActionResult DeleteAccount([FromRoute] Guid id)
+        [Route("api/account")]
+        public  ActionResult DeleteAccount()
         {
             _logger.LogError("Delete user accound started");
             if (!ModelState.IsValid)
@@ -251,7 +244,7 @@ namespace User_Microservice.Controllers
             }
             try
             {
-                ErrorDTO isAccountDeleted =  _userService.DeleteAccount(id);
+                ErrorDTO isAccountDeleted =  _userService.DeleteAccount();
                 if (isAccountDeleted != null)
                 {
                     _logger.LogError("User not found with id");
@@ -272,17 +265,11 @@ namespace User_Microservice.Controllers
         ///<param name="id">User id</param>
         ///<returns>returns Payment details</returns>
         [HttpGet]
-        [Route("api/payment/account/{id}")]
-        public IActionResult GetPaymentDetails([FromRoute] Guid id)
+        [Route("api/payment")]
+        public IActionResult GetPaymentDetails()
         {
             _logger.LogError("Geting payment details started");
-            ErrorDTO isUserExist = _userService.IsUserExist(id);
-            if(isUserExist != null)
-            {
-                _logger.LogError("User not found with id");
-                return StatusCode(404,isUserExist);
-            }
-            PaymentDetailsResponseDTO response = _userService.GetPaymentDetails(id);
+            PaymentDetailsResponseDTO response = _userService.GetPaymentDetails();
             if (response == null)
             {
                 _logger.LogError("No payment details added ");
@@ -297,8 +284,8 @@ namespace User_Microservice.Controllers
         ///</summary>
         ///<param name="cardDTO">User id</param>
         [HttpPut]
-        [Route("api/card/account")]
-        public IActionResult UpdateCardDetails([FromBody] UpdateCardDTO cardDTO)
+        [Route("api/card/account/{id}")]
+        public IActionResult UpdateCardDetails([FromBody] UpdateCardDTO cardDTO,[FromRoute]Guid id)
         {
             _logger.LogError("Update user card details started");
             if (!ModelState.IsValid)
@@ -307,13 +294,13 @@ namespace User_Microservice.Controllers
                 ErrorDTO badRequest = _userService.ModelStateInvalid(ModelState);
                 return BadRequest(badRequest);
             }
-            ErrorDTO isUserDetailsExist = _userService.IsUserDetailsExist(cardDTO);
+            ErrorDTO isUserDetailsExist = _userService.IsUserDetailsExist(id);
             if (isUserDetailsExist != null)
             {
-                _logger.LogError("User not found with id");
+                _logger.LogError("Card id not found");
                 return StatusCode(404, isUserDetailsExist);
             }
-            ErrorDTO isCardetailsExist = _userService.IsCardDetailsExist(cardDTO);
+            ErrorDTO isCardetailsExist = _userService.IsCardDetailsExist(cardDTO,id);
             if (isCardetailsExist != null)
             {
                 _logger.LogError("Card details already added");
@@ -328,8 +315,8 @@ namespace User_Microservice.Controllers
         ///</summary>
         ///<param name="updateUpiDTO">User id</param>
         [HttpPut]
-        [Route("api/upi")]
-        public IActionResult UpdateUpiDetails([FromBody]UpdateUpiDTO updateUpiDTO)
+        [Route("api/upi/{id}")]
+        public IActionResult UpdateUpiDetails([FromBody]UpdateUpiDTO updateUpiDTO,Guid id)
         {
             _logger.LogError("Update UPI details started");
             if (!ModelState.IsValid)
@@ -338,13 +325,13 @@ namespace User_Microservice.Controllers
                 ErrorDTO badRequest = _userService.ModelStateInvalid(ModelState);
                 return BadRequest(badRequest);
             }
-            ErrorDTO isUpiDetailsExist = _userService.IsUpiDetailsExist(updateUpiDTO);
+            ErrorDTO isUpiDetailsExist = _userService.IsUpiDetailsExist(updateUpiDTO,id);
             if (isUpiDetailsExist != null)
             {
                 _logger.LogError("User not found with id");
                 return StatusCode(404, isUpiDetailsExist);
             }
-            ErrorDTO updateUpiDetails = _userService.UpdateUpiDetails(updateUpiDTO);
+            ErrorDTO updateUpiDetails = _userService.UpdateUpiDetails(updateUpiDTO,id);
             if (updateUpiDetails != null)
             {
                 _logger.LogError("Upi details already exist");

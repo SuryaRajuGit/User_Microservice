@@ -93,13 +93,13 @@ namespace User_Microservice.Contracts
         /// Gets user details .
         ///</summary>
         ///<return>UserDetailsResponse</return>
-        public UserDetailsResponse GetuserDetails(Guid id);
+        public UserDetailsResponse GetuserDetails();
 
         ///<summary>
         /// Deletes user account
         ///</summary>
         ///<return>ErrorDTO</return>
-        public ErrorDTO DeleteAccount(Guid id);
+        public ErrorDTO DeleteAccount();
 
         ///<summary>
         /// check user details exist
@@ -111,13 +111,13 @@ namespace User_Microservice.Contracts
         /// Check user card details
         ///</summary>
         ///<return>ErrorDTO</return>
-        public PaymentDetailsResponseDTO GetPaymentDetails(Guid id);
+        public PaymentDetailsResponseDTO GetPaymentDetails();
 
         ///<summary>
         /// Check user card details
         ///</summary>
         ///<return>ErrorDTO</return>
-        public ErrorDTO IsCardDetailsExist(UpdateCardDTO updateCardDTO);
+        public ErrorDTO IsCardDetailsExist(UpdateCardDTO updateCardDTO,Guid id);
 
         ///<summary>
         /// Checks user exist or not
@@ -141,13 +141,13 @@ namespace User_Microservice.Contracts
         /// Checks user details exist or not
         ///</summary>
         ///<return>ErrorDTO</return>
-        public ErrorDTO IsUpiDetailsExist(UpdateUpiDTO updateUpiDTO);
+        public ErrorDTO IsUpiDetailsExist(UpdateUpiDTO updateUpiDTO,Guid id);
 
         ///<summary>
         /// Updates user UPI details
         ///</summary>
         ///<return>ErrorDTO</return>
-        public ErrorDTO UpdateUpiDetails(UpdateUpiDTO updateUpiDTO);
+        public ErrorDTO UpdateUpiDetails(UpdateUpiDTO updateUpiDTO,Guid id);
 
         ///<summary>
         /// Checks Payment details exist or not
@@ -166,7 +166,7 @@ namespace User_Microservice.Contracts
         /// checks user details exist 
         ///</summary>
         ///<return>ErrorDTO</return>
-        public ErrorDTO IsUserDetailsExist(UpdateCardDTO cardDTO);
+        public ErrorDTO IsUserDetailsExist(Guid id);
 
         ///<summary>
         /// Checks User id exist or not

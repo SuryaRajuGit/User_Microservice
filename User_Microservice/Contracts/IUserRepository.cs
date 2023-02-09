@@ -110,7 +110,7 @@ namespace User_Microservice.Contracts
         /// Saves user card details and return bool value
         ///</summary>
         ///<return>bool</return>
-        public bool isCardDetailsExist(Payment card);
+        public bool IsCardDetailsExist(Payment card);
 
         ///<summary>
         ///Gets User details 

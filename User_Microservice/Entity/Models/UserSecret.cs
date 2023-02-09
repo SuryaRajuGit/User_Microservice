@@ -8,7 +8,9 @@ namespace User_Microservice.Entity.Models
     public class UserSecret : BaseModel
     {
 
-
+        ///<summary>
+        /// User id
+        ///</summary>
         public Guid UserId { get; set; }
         public User User { get; set; }
 

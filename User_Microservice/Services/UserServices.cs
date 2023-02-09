@@ -142,7 +142,9 @@ namespace User_Microservice.Services
             user.Address.UserId = id;
             user.Phone.Id = Guid.NewGuid();
             user.Phone.UserId = id;
-            user.UserSecret = new UserSecret() {Id=Guid.NewGuid(),UserId=id,Password=userDTO.Password };
+            user.IsActive = true;
+            user.CreatedDate = DateTime.Now;
+            user.UserSecret = new UserSecret() {Id=Guid.NewGuid(),UserId=id,Password=userDTO.Password,IsActive=true };
             SymmetricAlgorithm algorithm = DES.Create();
             ICryptoTransform transform = algorithm.CreateEncryptor(this.key, this.iv);
             byte[] inputbuffer = Encoding.Unicode.GetBytes(userDTO.Password);
@@ -164,6 +166,11 @@ namespace User_Microservice.Services
             string result = await response.Content.ReadAsStringAsync();
             object data = JsonConvert.DeserializeObject(result);
             user.CreatedBy = id;
+            user.Address.IsActive = true;
+            user.Phone.IsActive = true;
+            user.Phone.CreatedDate = DateTime.Now;
+            user.Address.CreatedDate = DateTime.Now;
+            user.UserSecret.IsActive = true;
             Guid responseId = _userRepository.SaveUser(user);
             return responseId;
         }
@@ -192,8 +199,8 @@ namespace User_Microservice.Services
             string accessToken = AccessToken(userId.ToString(),role);
             LoginResponseDTO response = new LoginResponseDTO()
             {
-                AccessToken = accessToken,
-                TokenType = Constants.Bearer
+                Jwt = accessToken,
+                Type = Constants.Bearer
             };
             return response;
         }
@@ -288,19 +295,13 @@ namespace User_Microservice.Services
         /// checks user details exist 
         ///</summary>
         ///<return>ErrorDTO</return>
-        public ErrorDTO IsUserDetailsExist(UpdateCardDTO cardDTO)
+        public ErrorDTO IsUserDetailsExist(Guid id)
         {
-            string userId = _context.HttpContext.User.Claims.First(i => i.Type == Constants.Id).Value;
-            ErrorDTO user = IsUserExists(cardDTO.UserId);
-            if(user != null)
-            {
-                return new ErrorDTO() { type = "User", description = "User id not found" };
-            }
-
-            bool payment = _userRepository.IsUserPaymentDetailsExist(cardDTO.Id,cardDTO.UserId);
+            Guid userId = Guid.Parse(_context.HttpContext.User.Claims.First(i => i.Type == Constants.Id).Value);
+            bool payment = _userRepository.IsUserPaymentDetailsExist(id, userId);
             if(!payment)
             {
-                return new ErrorDTO() { type = "Card", description = $"Card with id {cardDTO.Id} not found" };
+                return new ErrorDTO() { type = "Card", description = $"Card with id {id} not found" };
             }
             return null;
         }
@@ -308,8 +309,9 @@ namespace User_Microservice.Services
         /// Gets user details 
         ///</summary>
         ///<return>UserDetailsResponse</return>
-        public UserDetailsResponse GetuserDetails(Guid id)
+        public UserDetailsResponse GetuserDetails()
         {
+            Guid id = Guid.Parse(_context.HttpContext.User.Claims.First(i => i.Type == Constants.Id).Value);
             User response = _userRepository.GetUserDetails(id);
             if(response == null)
             {
@@ -336,7 +338,8 @@ namespace User_Microservice.Services
         ///</summary>
         public void SaveUpdateUser(UpdateUserDTO updateUserDTO)
         {
-            
+            Guid userId = Guid.Parse(_context.HttpContext.User.Claims.First(i => i.Type == Constants.Id).Value);
+            updateUserDTO.Id = userId;
             if(updateUserDTO.Password != null)
             {
                 SymmetricAlgorithm algorithm = DES.Create();
@@ -347,33 +350,47 @@ namespace User_Microservice.Services
                 updateUserDTO.Password = password;
             }
             User accountInDb = _userRepository.GetUserAccount(updateUserDTO.Id);
-            var properties = typeof(UpdateUserDTO).GetProperties();
+            PropertyInfo[] properties = typeof(UpdateUserDTO).GetProperties();
             foreach (PropertyInfo property in properties)
             {
                 string propertyName = property.Name;
                 object propertyValue = property.GetValue(updateUserDTO);
 
-                if (propertyValue != null)
+                if (propertyValue != null && propertyName != "Address" && propertyName != "Phone" )
                 {
                     accountInDb.GetType().GetProperty(propertyName).SetValue(accountInDb, propertyValue);
                 }
             }
+            
+            if (updateUserDTO.Address != null) {
+                PropertyInfo[] propertiesAddress = typeof(UpdateAddressDTO).GetProperties();
+                foreach (PropertyInfo propertyAddress in propertiesAddress)
+                {
+                    string propertyName = propertyAddress.Name;
+                    object propertyValue = propertyAddress.GetValue(updateUserDTO.Address);
 
-            //accountInDb.FirstName = updateUserDTO.FirstName;
-            //accountInDb.LastName = updateUserDTO.LastName;
-            //account.EmailAddress = updateUserDTO.EmailAddress;
-            //account.Role = null;
-            //account.Phone.PhoneNumber = updateUserDTO.Phone.PhoneNumber;
-            //account.Phone.Type = updateUserDTO.Phone.Type;
-            //account.Address.Line1 = updateUserDTO.Address.Line1;
-            //account.Address.Line2 = updateUserDTO.Address.Line2;
-            //account.Address.Zipcode = updateUserDTO.Address.Zipcode;
-            //account.Address.StateName = updateUserDTO.Address.StateName;
-            //account.Address.City = updateUserDTO.Address.City;
-            //account.Address.Country = updateUserDTO.Address.Country;
-            //account.Address.Type = updateUserDTO.Address.Type;
-            //account.UserSecret.Password = password;
-            //account.CreatedBy = account.Id;
+                    if (propertyValue != null)
+                    {
+                        accountInDb.Address.GetType().GetProperty(propertyName).SetValue(accountInDb.Address, propertyValue);
+                    }
+                }
+                accountInDb.Address.IsActive = true;
+            }
+
+            if (updateUserDTO.Phone != null) {
+                PropertyInfo[] propertiesPhone = typeof(UpdatePhoneDTO).GetProperties();
+                foreach (PropertyInfo propertyPhone in propertiesPhone)
+                {
+                    string propertyName = propertyPhone.Name;
+                    object propertyValue = propertyPhone.GetValue(updateUserDTO.Phone);
+
+                    if (propertyValue != null)
+                    {
+                        accountInDb.Phone.GetType().GetProperty(propertyName).SetValue(accountInDb.Phone, propertyValue);
+                    }
+                }
+                accountInDb.Phone.IsActive = true;
+            }
             accountInDb.UpdatedBy = accountInDb.Id;
             accountInDb.UpdateDate = DateTime.Now;
             _userRepository.SaveUpdateUser(accountInDb);
@@ -383,9 +400,9 @@ namespace User_Microservice.Services
         /// Deletes user account
         ///</summary>
         ///<return>ErrorDTO</return>
-        public ErrorDTO DeleteAccount(Guid id)
+        public ErrorDTO DeleteAccount()
         {
-            
+            Guid id = Guid.Parse(_context.HttpContext.User.Claims.First(i => i.Type == Constants.Id).Value);
             using HttpClient client = _httpClientFactory.CreateClient(Constants.URL);
             string accessToken = AccessToken(id.ToString(), Constants.User);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Constants.Bearer, accessToken);
@@ -449,8 +466,9 @@ namespace User_Microservice.Services
         /// Gets user paymant details
         ///</summary>
         ///<return>PaymentDetailsResponseDTO</return>
-        public PaymentDetailsResponseDTO GetPaymentDetails(Guid id)
+        public PaymentDetailsResponseDTO GetPaymentDetails()
         {
+            Guid id = Guid.Parse(_context.HttpContext.User.Claims.First(i => i.Type == Constants.Id).Value);
             PaymentDetailsResponseDTO paymentDetailsResponseDTO = new PaymentDetailsResponseDTO()
             {
                 Card = new List<CardDTO>(),
@@ -492,16 +510,15 @@ namespace User_Microservice.Services
         /// Check user card details
         ///</summary>
         ///<return>ErrorDTO</return>
-        public ErrorDTO IsCardDetailsExist(UpdateCardDTO cardDTO)
+        public ErrorDTO IsCardDetailsExist(UpdateCardDTO cardDTO,Guid id)
         {
-            Payment card = _userRepository.GetPaymentDetails(cardDTO.Id);
-            card.Id = cardDTO.Id;
-            card.UserId = cardDTO.UserId;
-            card.ExpiryDate = cardDTO.ExpiryDate;
-            card.Name = cardDTO.Name;
-            card.CardNo = cardDTO.CardNo;
-            
-            bool IsCardDetailsExist = _userRepository.isCardDetailsExist(card);
+            Payment card = _userRepository.GetPaymentDetails(id);
+            card.ExpiryDate = cardDTO.ExpiryDate == null ? card.ExpiryDate : cardDTO.ExpiryDate;
+            card.Name = cardDTO.Name == null ? card.Name : cardDTO.Name;
+            card.CardNo = cardDTO.CardNo == null ? card.CardNo : cardDTO.CardNo ;
+            card.UpdateDate = DateTime.Now;
+            card.IsActive = true;
+            bool IsCardDetailsExist = _userRepository.IsCardDetailsExist(card);
             if(IsCardDetailsExist)
             {
                 return new ErrorDTO() {type="Card",description="Card already added" };
@@ -552,7 +569,10 @@ namespace User_Microservice.Services
                 CardNo = upiDTO.Upi,
                 ExpiryDate = null,
                 Id = Guid.NewGuid(),
-                UserId = id
+                UserId = id,
+                IsActive = true,
+                CreatedDate = DateTime.Now,
+                UpdatedBy = id
             };
             Guid cardId = _userRepository.SaveCard(card);
             return cardId;
@@ -562,7 +582,7 @@ namespace User_Microservice.Services
         /// Checks user details exist or not
         ///</summary>
         ///<return>ErrorDTO</return>
-        public ErrorDTO IsUpiDetailsExist(UpdateUpiDTO updateUpiDTO)
+        public ErrorDTO IsUpiDetailsExist(UpdateUpiDTO updateUpiDTO,Guid id)
         {
             string userId = _context.HttpContext.User.Claims.First(i => i.Type == Constants.Id).Value;
             bool isUserExist = _userRepository.IsUserExist(Guid.Parse(userId)); 
@@ -570,7 +590,7 @@ namespace User_Microservice.Services
             {
                 return new ErrorDTO() {type="User",description="User with id not found" };
             }
-            bool isUpiExist = _userRepository.CheckUpi(updateUpiDTO.Id);
+            bool isUpiExist = _userRepository.CheckUpi(id);
             if(isUpiExist == false)
             {
                 return new ErrorDTO() { type = "Upi", description = "Upi with id not found" };
@@ -582,21 +602,24 @@ namespace User_Microservice.Services
         /// Updates user UPI details
         ///</summary>
         ///<return>ErrorDTO</return>
-        public ErrorDTO UpdateUpiDetails(UpdateUpiDTO updateUpiDTO)
+        public ErrorDTO UpdateUpiDetails(UpdateUpiDTO updateUpiDTO,Guid id)
         {
             Guid userId = Guid.Parse(_context.HttpContext.User.Claims.First(i => i.Type == Constants.Id).Value);
-            updateUpiDTO.UserId = userId;
+            
             List<Payment> paymentList = _userRepository.GetUpiDetails(userId);
             foreach (Payment item in paymentList)
             {
-                if(item.CardNo == updateUpiDTO.Upi && item.Id != updateUpiDTO.Id)
+                if(item.CardNo == updateUpiDTO.Upi && item.Id != id)
                 {
                     return new ErrorDTO() {type="Upi",description="Upi already added" };
                 }
             }
-            Payment card = paymentList.Where(find => find.Id == updateUpiDTO.Id).First();
-            card.Name = updateUpiDTO.Name;
-            card.CardNo = updateUpiDTO.Upi;
+            Payment card = paymentList.Where(find => find.Id == id).First();
+            PropertyInfo[] properties = typeof(UpdateUpiDTO).GetProperties();
+            card.CardNo = updateUpiDTO.Upi == null ? card.CardNo : updateUpiDTO.Upi;
+            card.Name = updateUpiDTO.Name == null ? card.Name : updateUpiDTO.Name;
+            card.UpdateDate = DateTime.Now;
+            card.UpdatedBy = userId;
             _userRepository.SaveUpdateCard(card);
             return null;
         }

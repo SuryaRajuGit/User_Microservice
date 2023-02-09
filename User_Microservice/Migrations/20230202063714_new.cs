@@ -12,6 +12,11 @@ namespace User_Microservice.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(nullable: false),
+                    CreatedBy = table.Column<Guid>(nullable: false),
+                    UpdatedBy = table.Column<Guid>(nullable: false),
+                    CreatedDate = table.Column<DateTime>(nullable: false),
+                    UpdateDate = table.Column<DateTime>(nullable: false),
+                    IsActive = table.Column<bool>(nullable: false),
                     FirstName = table.Column<string>(nullable: true),
                     LastName = table.Column<string>(nullable: true),
                     EmailAddress = table.Column<string>(nullable: true),
@@ -27,6 +32,11 @@ namespace User_Microservice.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(nullable: false),
+                    CreatedBy = table.Column<Guid>(nullable: false),
+                    UpdatedBy = table.Column<Guid>(nullable: false),
+                    CreatedDate = table.Column<DateTime>(nullable: false),
+                    UpdateDate = table.Column<DateTime>(nullable: false),
+                    IsActive = table.Column<bool>(nullable: false),
                     UserId = table.Column<Guid>(nullable: false),
                     Line1 = table.Column<string>(nullable: true),
                     Line2 = table.Column<string>(nullable: true),
@@ -48,20 +58,25 @@ namespace User_Microservice.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Card",
+                name: "Payment",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(nullable: false),
+                    CreatedBy = table.Column<Guid>(nullable: false),
+                    UpdatedBy = table.Column<Guid>(nullable: false),
+                    CreatedDate = table.Column<DateTime>(nullable: false),
+                    UpdateDate = table.Column<DateTime>(nullable: false),
+                    IsActive = table.Column<bool>(nullable: false),
                     UserId = table.Column<Guid>(nullable: false),
-                    CardHolderName = table.Column<string>(nullable: true),
+                    Name = table.Column<string>(nullable: true),
                     CardNo = table.Column<string>(nullable: true),
                     ExpiryDate = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Card", x => x.Id);
+                    table.PrimaryKey("PK_Payment", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Card_User_UserId",
+                        name: "FK_Payment_User_UserId",
                         column: x => x.UserId,
                         principalTable: "User",
                         principalColumn: "Id",
@@ -73,6 +88,11 @@ namespace User_Microservice.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(nullable: false),
+                    CreatedBy = table.Column<Guid>(nullable: false),
+                    UpdatedBy = table.Column<Guid>(nullable: false),
+                    CreatedDate = table.Column<DateTime>(nullable: false),
+                    UpdateDate = table.Column<DateTime>(nullable: false),
+                    IsActive = table.Column<bool>(nullable: false),
                     UserId = table.Column<Guid>(nullable: false),
                     PhoneNumber = table.Column<string>(nullable: true),
                     Type = table.Column<string>(nullable: true)
@@ -93,6 +113,11 @@ namespace User_Microservice.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(nullable: false),
+                    CreatedBy = table.Column<Guid>(nullable: false),
+                    UpdatedBy = table.Column<Guid>(nullable: false),
+                    CreatedDate = table.Column<DateTime>(nullable: false),
+                    UpdateDate = table.Column<DateTime>(nullable: false),
+                    IsActive = table.Column<bool>(nullable: false),
                     UserId = table.Column<Guid>(nullable: false),
                     Password = table.Column<string>(nullable: true)
                 },
@@ -107,25 +132,48 @@ namespace User_Microservice.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.InsertData(
+                table: "User",
+                columns: new[] { "Id", "CreatedBy", "CreatedDate", "EmailAddress", "FirstName", "IsActive", "LastName", "Role", "UpdateDate", "UpdatedBy" },
+                values: new object[] { new Guid("9236ba78-62d6-48e4-b2ac-ac796b01b0ff"), new Guid("00000000-0000-0000-0000-000000000000"), new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@gmail.com", "Admin", false, "Admin", "ADMIN", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new Guid("00000000-0000-0000-0000-000000000000") });
+
+            migrationBuilder.InsertData(
+                table: "Address",
+                columns: new[] { "Id", "City", "Country", "CreatedBy", "CreatedDate", "IsActive", "Line1", "Line2", "StateName", "Type", "UpdateDate", "UpdatedBy", "UserId", "Zipcode" },
+                values: new object[] { new Guid("136f7604-ba07-4f43-8dec-78456a78776e"), "Admin", "Admin", new Guid("00000000-0000-0000-0000-000000000000"), new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), false, "Admin", "Admin", "Admin", "ADMIN", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new Guid("00000000-0000-0000-0000-000000000000"), new Guid("9236ba78-62d6-48e4-b2ac-ac796b01b0ff"), "531116" });
+
+            migrationBuilder.InsertData(
+                table: "Phone",
+                columns: new[] { "Id", "CreatedBy", "CreatedDate", "IsActive", "PhoneNumber", "Type", "UpdateDate", "UpdatedBy", "UserId" },
+                values: new object[] { new Guid("80bfa39c-e781-4fc0-a60c-5840fc90bbcd"), new Guid("00000000-0000-0000-0000-000000000000"), new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), false, "8142255769", "ADMIN", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new Guid("00000000-0000-0000-0000-000000000000"), new Guid("9236ba78-62d6-48e4-b2ac-ac796b01b0ff") });
+
+            migrationBuilder.InsertData(
+                table: "UserSecret",
+                columns: new[] { "Id", "CreatedBy", "CreatedDate", "IsActive", "Password", "UpdateDate", "UpdatedBy", "UserId" },
+                values: new object[] { new Guid("57901aa7-4164-4d5b-8a23-31629a36cfec"), new Guid("00000000-0000-0000-0000-000000000000"), new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), false, "EgF0XPOUFuQ96ZhmM+Bbw8c2bESZuzw0", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new Guid("00000000-0000-0000-0000-000000000000"), new Guid("9236ba78-62d6-48e4-b2ac-ac796b01b0ff") });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Address_UserId",
                 table: "Address",
-                column: "UserId");
+                column: "UserId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Card_UserId",
-                table: "Card",
+                name: "IX_Payment_UserId",
+                table: "Payment",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Phone_UserId",
                 table: "Phone",
-                column: "UserId");
+                column: "UserId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserSecret_UserId",
                 table: "UserSecret",
-                column: "UserId");
+                column: "UserId",
+                unique: true);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -134,7 +182,7 @@ namespace User_Microservice.Migrations
                 name: "Address");
 
             migrationBuilder.DropTable(
-                name: "Card");
+                name: "Payment");
 
             migrationBuilder.DropTable(
                 name: "Phone");

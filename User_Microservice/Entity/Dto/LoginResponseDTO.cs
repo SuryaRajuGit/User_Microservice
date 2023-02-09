@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,8 +8,10 @@ namespace User_Microservice.Entity.Dto
 {
     public class LoginResponseDTO
     {
-        public string AccessToken { get; set; }
+        [JsonProperty(PropertyName = "jwt")]
+        public string Jwt { get; set; }
 
-        public string TokenType { get; set; }
+        [JsonProperty(PropertyName = "type")]
+        public string Type { get; set; }
     }
 }

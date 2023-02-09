@@ -12,8 +12,8 @@ namespace User_Microservice.Helpers
     {
         public Mappers()
         {
-            CreateMap<Phone, PhoneDTO>().ReverseMap();
-            CreateMap<Address, AddressDTO>().ReverseMap();
+            CreateMap<Phone, PhoneDTO>().ReverseMap().ForMember(sel => sel.IsActive, act => act.MapFrom(sel => true));
+            CreateMap<Address, AddressDTO>().ReverseMap().ForMember(sel => sel.IsActive, act => act.MapFrom(sel => true));
             CreateMap<UserSecret, UserSecretDTO>().ReverseMap();
             CreateMap<User, UserDTO>().ForMember(src => src.Password, term => term.MapFrom(ter =>
                 new UserSecret() { Id = Guid.NewGuid(), UserId = ter.Id, Password = ter.UserSecret.Password }

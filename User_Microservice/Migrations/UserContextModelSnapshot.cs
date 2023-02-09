@@ -31,6 +31,15 @@ namespace User_Microservice.Migrations
                     b.Property<string>("Country")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Line1")
                         .HasColumnType("nvarchar(max)");
 
@@ -42,6 +51,12 @@ namespace User_Microservice.Migrations
 
                     b.Property<string>("Type")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdateDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
@@ -59,14 +74,19 @@ namespace User_Microservice.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("50bcfd1c-72d9-4050-8b1a-ce8d3180088a"),
+                            Id = new Guid("136f7604-ba07-4f43-8dec-78456a78776e"),
                             City = "Admin",
                             Country = "Admin",
+                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = false,
                             Line1 = "Admin",
                             Line2 = "Admin",
                             StateName = "Admin",
                             Type = "ADMIN",
-                            UserId = new Guid("f09cdf79-e08f-4ffd-8998-875f9a07ac63"),
+                            UpdateDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            UpdatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
+                            UserId = new Guid("9236ba78-62d6-48e4-b2ac-ac796b01b0ff"),
                             Zipcode = "531116"
                         });
                 });
@@ -80,11 +100,26 @@ namespace User_Microservice.Migrations
                     b.Property<string>("CardNo")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("ExpiryDate")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdateDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
@@ -102,11 +137,26 @@ namespace User_Microservice.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Type")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdateDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
@@ -121,10 +171,15 @@ namespace User_Microservice.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("803d3a94-7116-454a-a860-f8fd4fee3e0c"),
+                            Id = new Guid("80bfa39c-e781-4fc0-a60c-5840fc90bbcd"),
+                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = false,
                             PhoneNumber = "8142255769",
                             Type = "ADMIN",
-                            UserId = new Guid("f09cdf79-e08f-4ffd-8998-875f9a07ac63")
+                            UpdateDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            UpdatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
+                            UserId = new Guid("9236ba78-62d6-48e4-b2ac-ac796b01b0ff")
                         });
                 });
 
@@ -134,17 +189,32 @@ namespace User_Microservice.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("EmailAddress")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FirstName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<string>("LastName")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Role")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdateDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -153,11 +223,16 @@ namespace User_Microservice.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("f09cdf79-e08f-4ffd-8998-875f9a07ac63"),
+                            Id = new Guid("9236ba78-62d6-48e4-b2ac-ac796b01b0ff"),
+                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             EmailAddress = "admin@gmail.com",
                             FirstName = "Admin",
+                            IsActive = false,
                             LastName = "Admin",
-                            Role = "ADMIN"
+                            Role = "ADMIN",
+                            UpdateDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            UpdatedBy = new Guid("00000000-0000-0000-0000-000000000000")
                         });
                 });
 
@@ -167,8 +242,23 @@ namespace User_Microservice.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Password")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdateDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
@@ -183,9 +273,14 @@ namespace User_Microservice.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("ab7d7102-74aa-48fe-a963-76212878b19c"),
+                            Id = new Guid("57901aa7-4164-4d5b-8a23-31629a36cfec"),
+                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = false,
                             Password = "EgF0XPOUFuQ96ZhmM+Bbw8c2bESZuzw0",
-                            UserId = new Guid("f09cdf79-e08f-4ffd-8998-875f9a07ac63")
+                            UpdateDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            UpdatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
+                            UserId = new Guid("9236ba78-62d6-48e4-b2ac-ac796b01b0ff")
                         });
                 });
 

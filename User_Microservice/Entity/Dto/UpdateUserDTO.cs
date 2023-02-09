@@ -30,10 +30,10 @@ namespace User_Microservice.Entity.Dto
         public string? EmailAddress { get; set; }
 
         [JsonProperty(PropertyName = "phone")]
-        public PhoneDTO? Phone { get; set; }
+        public UpdatePhoneDTO? Phone { get; set; }
 
         [JsonProperty(PropertyName = "address")]
-        public AddressDTO? Address { get; set; }
+        public UpdateAddressDTO? Address { get; set; }
 
 
     }
