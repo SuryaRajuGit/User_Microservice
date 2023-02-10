@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
+using System.Reflection;
 using System.Security.Claims;
 using System.Security.Principal;
 using System.Threading.Tasks;
@@ -26,6 +27,7 @@ using User_Microservice.Helpers;
 using User_Microservice.Repository;
 using User_Microservice.Services;
 using Xunit;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace User_UnitTesting
 {
@@ -102,7 +104,8 @@ namespace User_UnitTesting
         }
         public void AddData()
         {
-            string path = @"C:\Users\Hp\source\repos\User_Microservice\User_Microservice\Entity\UnitTestFiles\UserData.csv";
+            var g = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            string path = @"..\..\..\..\..\User_Microservice\User_Microservice\Entity\UnitTestFiles\UserData.csv";
             string ReadCSV = File.ReadAllText(path);
             List<User> users = new List<User>();
             string[] data = ReadCSV.Split('\r');
@@ -314,20 +317,19 @@ namespace User_UnitTesting
         {
             UpdateCardDTO updateCardDTO = new UpdateCardDTO()
             {
-                Id=Guid.Parse("26526fb6-2c2d-4e51-bd18-15fb50ab30be"),
+
                 CardNo = "789787676768768",
                 ExpiryDate = "01/23",
                 Name = "jhlhjhl",
             };
             UpdateCardDTO updateCardDTO1 = new UpdateCardDTO()
             {
-                Id = Guid.Parse("36526fb6-2c2d-4e51-bd18-15fb50ab30be"),
                 CardNo = "789787676768768",
                 ExpiryDate = "01/23",
                 Name = "jhlhjhl",
             };
-            IActionResult response = _userController.UpdateCardDetails(updateCardDTO);
-            IActionResult response1 = _userController.UpdateCardDetails(updateCardDTO1);
+            IActionResult response = _userController.UpdateCardDetails(updateCardDTO, Guid.Parse("26526fb6-2c2d-4e51-bd18-15fb50ab30be"));
+            IActionResult response1 = _userController.UpdateCardDetails(updateCardDTO1, Guid.Parse("36526fb6-2c2d-4e51-bd18-15fb50ab30be"));
 
             OkObjectResult result = Assert.IsType<OkObjectResult>(response);
             ObjectResult result1 = Assert.IsType<ObjectResult>(response1);
@@ -341,20 +343,18 @@ namespace User_UnitTesting
         {
             UpdateUpiDTO updateUpiDTO = new UpdateUpiDTO()
             {
-                Id = Guid.Parse("a334b297-3cc6-4d30-a304-0d95f7299064"),
                
                 Upi = "jljbjk",
                 Name = "jnjnjnjk",
             };
             UpdateUpiDTO updateUpiDTO1 = new UpdateUpiDTO()
             {
-                Id = Guid.Parse("a334b297-3cc6-4d30-a304-0d95f7299065"),
 
                 Upi = "jljbjk",
                 Name = "jnjnjnjk",
             };
-            IActionResult response = _userController.UpdateUpiDetails(updateUpiDTO);
-            IActionResult response1 = _userController.UpdateUpiDetails(updateUpiDTO1);
+            IActionResult response = _userController.UpdateUpiDetails(updateUpiDTO, Guid.Parse("a334b297-3cc6-4d30-a304-0d95f7299064"));
+            IActionResult response1 = _userController.UpdateUpiDetails(updateUpiDTO1, Guid.Parse("a334b297-3cc6-4d30-a304-0d95f7299065"));
 
             OkObjectResult result = Assert.IsType<OkObjectResult>(response);
             ObjectResult result1 = Assert.IsType<ObjectResult>(response1);

@@ -26,6 +26,7 @@ namespace User_Microservice.Helpers
             CreateMap<UserDTO, User>();
 
             CreateMap<Payment, CardDTO>().ReverseMap();
+            CreateMap<Address, Address>().ReverseMap();
         }
     }
 }
