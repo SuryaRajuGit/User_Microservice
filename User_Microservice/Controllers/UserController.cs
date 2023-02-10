@@ -47,13 +47,13 @@ namespace User_Microservice.Controllers
             if (isEmailExists == null)
             {
                 _logger.LogError("User not found with the details.");
-                return StatusCode(404, new ErrorDTO { type = "Login", description = "User not found" });
+                return StatusCode(404, new ErrorDTO { Type = "NotFound", Message = "User not found",StatusCode="404" });
             }
             LoginResponseDTO loginResponseDTO = _userService.VerifyLoginDetails(loginDTO);
             if (loginResponseDTO == null)
             {
                 _logger.LogError("Enter invalid password.");
-                return StatusCode(401, new ErrorDTO { type = "Login", description = "Invalid Password" });
+                return StatusCode(401, new ErrorDTO { Type = "UnAuthorise", Message = "Invalid Password",StatusCode="401" });
             }
             _logger.LogInformation("User logged successfully.");
             return Ok(loginResponseDTO);
@@ -220,7 +220,7 @@ namespace User_Microservice.Controllers
             if (userDetails == null)
             {
                 _logger.LogError("User not found with id");
-                return StatusCode(404, new ErrorDTO() { type = "User", description = "User with id not found" });
+                return StatusCode(404, new ErrorDTO() { Type = "NotFound", Message = "User with id not found", StatusCode = "404" });
             }
             _logger.LogError("User details retervied successfully");
             return Ok(userDetails);

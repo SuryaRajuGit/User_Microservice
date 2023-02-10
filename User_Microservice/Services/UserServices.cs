@@ -56,7 +56,7 @@ namespace User_Microservice.Services
             bool isEmailExists = _userRepository.IsEmailExists(emailAddress);
             if(isEmailExists)
             {
-                return new ErrorDTO { type = "Email", description = emailAddress + " Email already exists" };
+                return new ErrorDTO { Type = "Conflict", Message = emailAddress + " Email already exists" ,StatusCode="409"};
             }
             return null;
         }
@@ -69,8 +69,9 @@ namespace User_Microservice.Services
         {
             return new ErrorDTO
             {
-                type = ModelState.Keys.FirstOrDefault(),
-                description = ModelState.Values.Select(src => src.Errors.Select(src => src.ErrorMessage).FirstOrDefault()).FirstOrDefault()
+                Type = "BadRequest",
+                Message = ModelState.Values.Select(src => src.Errors.Select(src => src.ErrorMessage).FirstOrDefault()).FirstOrDefault(),
+                StatusCode="400"
             };
         }
 
@@ -83,7 +84,7 @@ namespace User_Microservice.Services
             bool isPhoneExists = _userRepository.IsPhoneExists(phoneNumber);
             if (isPhoneExists)
             {
-                return new ErrorDTO { type = "Phone", description = phoneNumber + " Phone number already exists" };
+                return new ErrorDTO { Type = "Conflict", Message = phoneNumber + " Phone number already exists",StatusCode="409" };
             }
             return null;
         }
@@ -97,7 +98,7 @@ namespace User_Microservice.Services
             bool isAddressExists = _userRepository.IsAddressExists(Address);
             if (isAddressExists)
             {
-                return new ErrorDTO { type = "Address", description =   "Entered Address already exists" };
+                return new ErrorDTO { Type = "Conflict", Message =   "Entered Address already exists",StatusCode="409" };
             }
             return null;
         }
@@ -215,7 +216,7 @@ namespace User_Microservice.Services
             bool isCardExists = _userRepository.IsCardExists(cardNo,id);
             if(isCardExists)
             {
-                return new ErrorDTO {type="Card",description="Card already exists" };
+                return new ErrorDTO {Type="Conflict",Message="Card already exists",StatusCode="409" };
             }
             return null;
         }
@@ -245,7 +246,7 @@ namespace User_Microservice.Services
             bool isUpdateUserEmailExists = _userRepository.IsUpdateUserEmailExists(emailAddress,userId);
             if (!isUpdateUserEmailExists)
             {
-                return new ErrorDTO { type = "Email", description = emailAddress + " Email already exists" };
+                return new ErrorDTO { Type = "Conflict", Message = emailAddress + " Email already exists",StatusCode="409" };
             }
             return null;
         }
@@ -259,7 +260,7 @@ namespace User_Microservice.Services
             bool isUpdateUserEmailExists = _userRepository.IsUpdateUserPhoneExists(phoneNumber, userId);
             if (!isUpdateUserEmailExists)
             {
-                return new ErrorDTO { type = "Pbone number", description = phoneNumber + " already exists" };
+                return new ErrorDTO { Type = "Conflict", Message = phoneNumber + " already exists",StatusCode="409" };
             }
             return null;
         }
@@ -273,7 +274,7 @@ namespace User_Microservice.Services
             bool isAddressExists = _userRepository.IsUpdateUserAddressExists(address, userId);
             if (!isAddressExists)
             {
-                return new ErrorDTO { type = "Address", description = address + " Address  already exists" };
+                return new ErrorDTO { Type = "Conflict", Message = address + " Address  already exists",StatusCode="409" };
             }
             return null;
         }
@@ -287,7 +288,7 @@ namespace User_Microservice.Services
             bool isUserExist = _userRepository.IsUserExist(userId);
             if(!isUserExist)
             {
-                return new ErrorDTO() {type="User",description="User id not found" };
+                return new ErrorDTO() {Type="NotFound",Message="User id not found",StatusCode="404" };
             }
             return null;
         }
@@ -301,7 +302,7 @@ namespace User_Microservice.Services
             bool payment = _userRepository.IsUserPaymentDetailsExist(id, userId);
             if(!payment)
             {
-                return new ErrorDTO() { type = "Card", description = $"Card with id {id} not found" };
+                return new ErrorDTO() { Type = "NotFound", Message = $"Card with id {id} not found",StatusCode="404" };
             }
             return null;
         }
@@ -406,7 +407,7 @@ namespace User_Microservice.Services
             using HttpClient client = _httpClientFactory.CreateClient(Constants.URL);
             string accessToken = AccessToken(id.ToString(), Constants.User);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Constants.Bearer, accessToken);
-
+            //api call to user service
             HttpResponseMessage response =  client.DeleteAsync($"/api/user/{id}").Result;
             if (!response.IsSuccessStatusCode)
             {
@@ -415,7 +416,7 @@ namespace User_Microservice.Services
             bool isAccountDeleted = _userRepository.DeleteUser(id);
             if (!isAccountDeleted)
             {
-                return new ErrorDTO() { type = "User", description = "User with id not found" };
+                return new ErrorDTO() { Type = "NotFound", Message = "User with id not found",StatusCode="404" };
             }
             return null;
         }
@@ -431,7 +432,7 @@ namespace User_Microservice.Services
                 bool isUpdateUserEmailExists = _userRepository.IsUpdateUserEmailExists(updateUserDTO.EmailAddress, updateUserDTO.Id);
                 if (!isUpdateUserEmailExists)
                 {
-                    return new ErrorDTO { type = "Email", description = updateUserDTO.EmailAddress + " Email already exists" };
+                    return new ErrorDTO { Type = "Conflict", Message = updateUserDTO.EmailAddress + " Email already exists",StatusCode="409" };
                 }
             }
             if(updateUserDTO.Phone != null)
@@ -439,7 +440,7 @@ namespace User_Microservice.Services
                 bool isUpdateUserPhoneExists = _userRepository.IsUpdateUserPhoneExists(updateUserDTO.Phone.PhoneNumber, updateUserDTO.Id);
                 if (!isUpdateUserPhoneExists)
                 {
-                    return new ErrorDTO { type = "Phone number", description = updateUserDTO.Phone.PhoneNumber + "Phone already exists" };
+                    return new ErrorDTO { Type = "Conflict", Message = updateUserDTO.Phone.PhoneNumber + "Phone already exists",StatusCode="409" };
                 }
             }
             if(updateUserDTO.Address != null)
@@ -457,7 +458,7 @@ namespace User_Microservice.Services
                 bool isAddressExists = _userRepository.IsUpdateUserAddressExists(address, updateUserDTO.Id);
                 if (isAddressExists)
                 {
-                    return new ErrorDTO { type = "Address", description = updateUserDTO.Address + " Address  already exists" };
+                    return new ErrorDTO { Type = "Conflict", Message = updateUserDTO.Address + " Address  already exists",StatusCode="409" };
                 }
             }
             return null;
@@ -521,7 +522,7 @@ namespace User_Microservice.Services
             bool IsCardDetailsExist = _userRepository.IsCardDetailsExist(card);
             if(IsCardDetailsExist)
             {
-                return new ErrorDTO() {type="Card",description="Card already added" };
+                return new ErrorDTO() {Type="Conflict",Message="Card already added",StatusCode="409" };
             }
             return null;
         }
@@ -535,7 +536,7 @@ namespace User_Microservice.Services
             bool isUpiExist = _userRepository.IsUserExist(id);
             if(!isUpiExist)
             {
-                return new ErrorDTO() {type="User",description=$"User id not Exist {id}" };
+                return new ErrorDTO() {Type="User",Message=$"User id not Exist {id}",StatusCode="404" };
             }
             return null;
         }
@@ -551,7 +552,7 @@ namespace User_Microservice.Services
             {
                 if(item.ExpiryDate == null && item.CardNo == upiDTO.Upi)
                 {
-                    return new ErrorDTO() { type = "Upi", description = $"Upi {upiDTO.Upi} already added" };
+                    return new ErrorDTO() { Type = "Conflict", Message = $"Upi {upiDTO.Upi} already added",StatusCode="409" };
                 }
             }
             return null;   
@@ -588,12 +589,12 @@ namespace User_Microservice.Services
             bool isUserExist = _userRepository.IsUserExist(Guid.Parse(userId)); 
             if(isUserExist == false)
             {
-                return new ErrorDTO() {type="User",description="User with id not found" };
+                return new ErrorDTO() {Type="NotFound",Message="User with id not found",StatusCode="404" };
             }
             bool isUpiExist = _userRepository.CheckUpi(id);
             if(isUpiExist == false)
             {
-                return new ErrorDTO() { type = "Upi", description = "Upi with id not found" };
+                return new ErrorDTO() { Type = "Upi", Message = "Upi with id not found",StatusCode="404" };
             }
             return null;
         }
@@ -611,7 +612,7 @@ namespace User_Microservice.Services
             {
                 if(item.CardNo == updateUpiDTO.Upi && item.Id != id)
                 {
-                    return new ErrorDTO() {type="Upi",description="Upi already added" };
+                    return new ErrorDTO() {Type="Conflict",Message="Upi already added",StatusCode="409" };
                 }
             }
             Payment card = paymentList.Where(find => find.Id == id).First();
@@ -633,12 +634,12 @@ namespace User_Microservice.Services
             bool isAddressIdExist = _userRepository.IsAddressIdExist(checkOutDetailsDTO.AddressId);
             if(!isAddressIdExist)
             {
-                return new ErrorDTO() {type="Address",description=$"Address with id {checkOutDetailsDTO.AddressId} not exist" };
+                return new ErrorDTO() {Type="NotFound",Message=$"Address with id {checkOutDetailsDTO.AddressId} not exist",StatusCode="404" };
             }
             bool isPaymentIdExist = _userRepository.IsPaymentIdExist(checkOutDetailsDTO.PaymentId);
             if(!isPaymentIdExist)
             {
-                return new ErrorDTO() {type="Payment",description=$"Payment with id {checkOutDetailsDTO.PaymentId} not exist" };
+                return new ErrorDTO() {Type= "NotFound", Message=$"Payment with id {checkOutDetailsDTO.PaymentId} not exist",StatusCode="404" };
             }
             return null;
         }
@@ -658,6 +659,7 @@ namespace User_Microservice.Services
             return JsonConvert.SerializeObject(checkOutResponse);
 
         }
+
         ///<summary>
         /// Checks User id exist or not
         ///</summary>
@@ -667,7 +669,7 @@ namespace User_Microservice.Services
             ErrorDTO user = IsUserExists(id);
             if (user != null)
             {
-                return new ErrorDTO() {type="User",description="User account not found" };
+                return new ErrorDTO() {Type="NotFound",Message="User account not found",StatusCode="404" };
             }
             return null;
         }

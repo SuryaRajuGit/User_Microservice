@@ -9,6 +9,9 @@ namespace User_Microservice.Entity.Dto
 {
     public class UserSecretDTO
     {
+        ///<summary>
+        /// Password of the user
+        ///</summary>
         public string Password { get; set; }
     }
 }

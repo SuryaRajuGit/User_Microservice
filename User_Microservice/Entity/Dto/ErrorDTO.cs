@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,8 +8,22 @@ namespace User_Microservice.Entity.Dto
 {
     public class ErrorDTO
     {
-        public string type { get; set; }
+        ///<summary>
+        /// type of error
+        ///</summary>
+        [JsonProperty(PropertyName = "type")]
+        public string Type { get; set; }
 
-        public string description { get; set; }
+        ///<summary>
+        /// Message of the error
+        ///</summary>
+        [JsonProperty(PropertyName = "message")]
+        public string Message { get; set; }
+
+        ///<summary>
+        /// status code of the error
+        ///</summary>
+        [JsonProperty(PropertyName = "status_code")]
+        public string  StatusCode { get; set; }
     }
 }
